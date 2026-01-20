@@ -1,0 +1,142 @@
+# Ballast - Project Rules & Conventions
+
+## Language & Type Safety
+
+- Use JSDoc instead of TypeScript for type annotations and documentation
+- Use Zod for runtime validation and schema definitions
+- Prefer ESM (ES modules) over CommonJS, staying as consistent as possible unless this conflicts with Jest config or other tooling
+
+## Architecture
+
+- Domain logic stays framework agnostic (pure JS modules) - keep business rules in a specific shared place for things like charging, generating schedules, status transitions, etc.
+- Start simple: one payment processor (Stripe) and one agreement type (financing) before expanding
+
+## Testing
+
+- Tests need a super robust way to handle datetime. Never call `new Date()` directly in logic, instead inject a clock: `clock.now()` -> test clock supports `advanceDays(n)`. In tests, freeze/advance time using your Clock, not system time.
+- Jest in a monorepo: we can explore this as we go. Each app could have its own `jest.config.js` or we could use one root config that discovers tests everywhere (probably one root config at least to start)
+
+## Data & Idempotency
+
+- Database: PostgreSQL with Prisma. All dates should be stored as UTC.
+- Idempotency + retries – it's easy to accidentally double-charge if we're sloppy. We should enforce idempotency keys + DB uniqueness + job re-runnability.
+
+## Money & Numeric Precision
+
+- **NEVER perform arithmetic on floating-point money values.** All money must be stored and computed as integers (cents).
+- Use `@ballast/shared/src/money.js` utilities: `toCents()`, `formatMoney()`, `formatMoneyValue()`, etc.
+- **API Communication**: Always send and receive money amounts as integers (cents). Never convert between dollars and cents at API boundaries (webapp ↔ API, API ↔ gateways).
+- **Conversion Boundaries**: Convert dollars → cents only at user input boundaries (when user types in dollars). Convert cents → dollars only for display (using `formatMoney()` or `formatMoneyValue()`).
+- **Internal Computation**: All money calculations must use integer arithmetic (cents). Use `multiplyMoney()`, `addMoney()`, `percentOfMoney()` from the money utilities when needed.
+- For percentages (e.g., `percentPaid`, interest rates), use basis points (1% = 100 basis points) to avoid floating-point errors. Use `BasisPoints` utilities from the money module.
+- Database columns for money should be INTEGER (cents), not DECIMAL or FLOAT.
+- When displaying money, always use `formatMoney(cents)` or `formatMoneyValue(cents)` - never manual string concatenation with floating-point values.
+- **Validation**: When accepting money amounts in API routes or lib functions, validate that the value is an integer (use `Number.isInteger()`) and positive.
+
+## Monorepo Setup
+
+- Pnpm workspaces for the 4 main projects - we can look into turborepo or something later if we run into any pain
+- Node version and pnpm version should be pinned across all projects
+
+### Shared Package (`packages/shared`)
+
+**CRITICAL: The shared package is for sharing CODE, not dependencies.**
+
+- `@ballast/shared` exports shared utilities: Prisma client, money functions, fonts, CSS variables
+- Each app that imports a dependency directly MUST have it in its own `package.json`
+- You CANNOT "inherit" dependencies from a consumed package - npm/pnpm doesn't work that way
+- pnpm deduplicates automatically, so having the same dependency in multiple packages is fine
+
+**Current shared exports:**
+
+- `@ballast/shared/src/db/client.js` - Prisma client
+- `@ballast/shared/src/money.js` - Money utilities
+- `@ballast/shared/src/fonts` - Next.js fonts (uses `next/font/google`)
+- `@ballast/shared/src/styles/globals.css` - CSS variables
+- `@ballast/shared/src/config/env.js` - Environment config
+
+**Dependency rules:**
+
+- If shared uses a framework the apps also use (e.g., `next`), it goes in shared's `peerDependencies` - the apps provide it
+- If shared uses a standalone utility (e.g., `dotenv`), it goes in shared's `dependencies`
+- If an app imports a dependency directly (e.g., `styled-components`), it goes in that app's `package.json`
+- When updating framework versions, update the apps first, then update shared's peer version range
+- pnpm deduplicates - having the same dependency in multiple packages doesn't mean multiple installs
+
+## Platform & Scripts
+
+- Developing on Windows 10, but project should remain relatively platform-agnostic
+- Avoid bashisms and prefer node scripts over shell scripts
+- If we need to set env vars in scripts or elsewhere, use `cross-env` only if necessary
+- Never hardcode path separators - use `path.join()` / `path.resolve()` in Node.js
+- If we must run multi-step scripts, use `node ./scripts/something.js` instead of complex inline scripts within package.json files
+
+## Code Quality
+
+- Maintain `.gitattributes` to normalize line endings
+- Use `.editorconfig`, prettier + format on save, eslint with consistent rules across packages
+- Be cautious when installing libraries that compile due to cross-platform compatibility issues
+- Prefer single-line comments (`//`) for general code comments
+- Use multi-line comments (`/** */`) for JSDoc type annotations and function documentation
+- Avoid superfluous file header comments - code should be self-documenting
+- Never use nested ternary operators - use if/else statements or early returns instead
+- **Console usage**: Use `console.error()` for errors, `console.warn()` for warnings, `console.info()` for general logging. Use `console.log()` sparingly for debugging only. ESLint is configured to warn on `console.log()` but allow `error`, `warn`, and `info`.
+- **Constants & envs**: All `process.env` access lives in each app's `constants.js`. If a default value is used because an env var is missing, emit a one-time `console.warn` on app startup.
+
+## Project Structure
+
+The monorepo contains 4 main applications:
+
+1. Webapp with Admin dashboard (Next.js) - Financing Plans & Service Subscriptions management
+2. Webapp with payment forms (Next.js) - Demo app with fake cart/items/services for payment collection
+3. Main API (Express) - Routes, DB hooks, emails, webhooks, etc.
+4. Job Server (AWS batch + Event Bridge + Parameter Store) - Financing charge job, subscriptions charge job, discord/slack messages, deploy + scheduling scripts
+
+## Client-side / DOM styling conventions
+
+- Avoid the use of inline styles unless absolutely necessary. This should only be used for very specific cases where inline styles are the most appropriate solution.
+- **Always use Next.js `Image` component** (`next/image`) instead of native `<img>` elements. The `Image` component provides automatic image optimization, lazy loading, and responsive images. When using `fill` prop, ensure the parent container has `position: relative`.
+- Prefer the use of existing conventions surrounding the use of styled components.
+- Remember to style this accordingly for both light and dark mode (don't forget the scrollbars!)
+
+## Authentication & Route Protection
+
+- **AuthGuard must be used at the page level only**, never at the component level. This ensures consistent authentication behavior and makes it clear which routes require authentication.
+- Wrap page components with `AuthGuard` in page files (e.g., `app/cart/page.jsx`, `app/checkout/page.jsx`), not within reusable components.
+- Example: In `app/checkout/page.jsx`, wrap the page content with `AuthGuard`, not in the `Checkout` component itself.
+
+## Network Requests & API Communication
+
+- **Components must never call `fetch()` or gateways directly**. All network requests must go through the gateway pattern.
+- **Pattern**: `component -> store/context -> gateway -> api route -> api gateway`
+- **Gateways** are simple wrappers around `fetch()` that handle request configuration, headers, credentials, and response parsing.
+- Use "gateway" terminology, not "service" - "services" refer to customer-facing subscription services, not internal API communication layers.
+- **Client-side (webapp/admin)**:
+  - Create gateway files in `app/gateways/` (e.g., `authGateway.js`, `ordersGateway.js`, `paymentsGateway.js`)
+  - Contexts/stores call gateway functions
+  - Components call context/store functions - **never call gateways directly**
+- **Server-side (API)**: Create gateway files in `src/gateways/` for external service integrations (e.g., `stripeGateway.js`, `emailGateway.js`, `turnstileGateway.js`). Route handlers call gateway functions.
+- Gateway functions should be simple, focused wrappers that handle fetch configuration and return parsed responses or throw errors.
+- Use named imports for gateway functions (e.g., `import { fetchUser, login } from "@/gateways/authGateway"`), not namespace imports.
+
+## Import Aliases
+
+All applications (webapp, admin, and API) use import aliases instead of relative paths:
+
+- `@/` - Maps to the application source directory
+  - **Webapp/Admin**: Maps to `app/` directory (e.g., `@/components/ui/Header`)
+  - **API**: Maps to `src/` directory (e.g., `@/routes/auth.js`)
+- `@shared/` - Maps to `packages/shared/src/` (e.g., `@shared/money` instead of `../../../packages/shared/src/money`)
+
+**Rules:**
+
+- Always use `@/` for imports from within the application directory
+- Always use `@shared/` for imports from the shared package
+- Avoid relative paths (`../`, `../../`) - use aliases instead
+- Same-directory imports (`./`) are acceptable for files in the same directory
+
+**Configuration:**
+
+- **Next.js apps (webapp/admin)**: `next.config.js` (webpack aliases) + `jsconfig.json` (IDE support)
+- **API (Node.js ESM)**: ESM loader registered via `register()` API (`src/register.mjs` + `src/loader.mjs`) + `jsconfig.json` (IDE support)
+- Each application maintains its own `jsconfig.json` for flexibility and customization

@@ -1,0 +1,15 @@
+{
+  "buildCommand": "cd ../.. && pnpm --filter @ballast/shared db:generate && pnpm --filter @ballast/shared db:deploy && pnpm --filter @ballast/api build",
+  "installCommand": "cd ../.. && pnpm install",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "**"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index.js"
+    }
+  ]
+}

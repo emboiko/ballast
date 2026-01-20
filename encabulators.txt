@@ -1,0 +1,109 @@
+BASE:
+
+Industrial technical illustration of a fictional retroencabulator, rendered as a pseudo-schematic cutaway diagram with selective cutaways.
+The machine is complex, over-engineered, and partially transparent, with exposed internal components, impossible mechanical linkages, and speculative technology.
+
+ILLUSTRATION VS SCHEMATIC*
+
+ERA:
+
+Style inspired by mid-to-late 20th-century institutional engineering documentation.
+
+(Early / Primitive Encabulators)
+
+Style inspired by mid-20th-century engineering manuals, patent drawings, and Cold War research documents. 
+Line-forward illustration with minimal color, simplified materials, and visibly crude components.
+
+(Transitional / Institutional Growth)
+
+Style inspired by late-20th-century industrial documentation and laboratory schematics. 
+Increased material complexity, modular assemblies, standardized housings, and early composite materials.
+
+(Modern / Deep-Facility Monstrosities)
+
+Style inspired by late Aperture-Labs or Black-Mesa internal documentation. 
+Advanced composites, sealed modules, layered transparency, dense component packing, and non-human design logic.
+
+(Floating exploded components)
+
+Floating exploded compoents
+
+TEXT CONTROL:
+
+Any text or labels are minimal, clean, and legible.
+Simple sans-serif technical lettering only.
+Text is secondary to the diagram.
+
+Includes selective cutaways, schematic flow lines, arbitrary sectional cuts, and partially labeled subsystems.
+Annotations are sparse, confident, and slightly vague.
+Some labels reference fictional processes, subsystems, or measurements.
+Not all parts are explained.
+
+(No text)
+
+No annotations.
+No text, labels, or lettering is used.
+
+FORM FACTOR:
+
+The machine is non-rotational and non-cylindrical.
+Form factor resembles an industrial cabinet or enclosed apparatus.
+Rectilinear geometry with stacked modules, compartments, drawers, panels, and access doors.
+Asymmetrical layout with no central axis.
+
+(Rotational)
+
+The machine is rotational and cylindrical.
+The machine is vaguely rotational in nature
+The machine is mounted on its side
+The machine features a propeller or fan blade
+
+(Cabinet)
+
+The machine is non-rotational and non-cylindrical.
+Form factor resembles a cabinet, enclosure, or industrial housing.
+Rectilinear geometry with stacked modules, compartments, panels, and access doors.
+
+(Asymmetrical / Frankenstein)
+
+Asymmetrical layout with no central axis.
+Multiple subsystems arranged irregularly.
+Uneven proportions and non-repeating geometry.
+
+(Drawer / Panel / Bureaucratic Horror)
+
+Includes drawers, inspection panels, removable access plates, calibration ports, and mismatched modular attachments.
+The machine appears designed for maintenance by technicians rather than elegance.
+
+COLOR ACCENT:
+
+Neutral whites and grays with restrained green accents.
+Flat, clinical lighting. 
+Isolated on a neutral mask-friendly background.
+Orthographic view, centered composition.
+The tone is authoritative, instructional, and quietly absurd.
+No shadows.
+No environmental context.
+
+
+===============================================================
+
+Industrial technical illustration of a fictional retroencabulator, rendered as a pseudo-schematic cutaway diagram.
+The machine is complex, over-engineered, and partially transparent, with exposed internal components, impossible mechanical linkages, and speculative technology.
+
+Style inspired by late Aperture-Labs or Black-Mesa internal documentation. 
+Advanced composites, sealed modules, layered transparency, dense component packing, and non-human design logic.
+
+The machine has the vague form factor of a large CNC machine
+
+Selective cutaways with no annotations.
+No text, labels, or lettering is used.
+
+Neutral whites and grays with restrained green accents.
+Flat, clinical lighting. Clean background.
+Orthographic view, centered composition.
+The tone is authoritative, instructional, and quietly absurd.
+
+Isolated on a neutral mask-friendly background.
+No shadows.
+No environmental context.

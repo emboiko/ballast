@@ -1,0 +1,14 @@
+{
+  "name": "@ballast/jobs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "runChargeFinancing": "node scripts/financing/runChargeFinancing.js",
+    "runChargeSubscriptions": "node scripts/subscriptions/runChargeSubscriptions.js",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@ballast/shared": "workspace:*"
+  }
+}

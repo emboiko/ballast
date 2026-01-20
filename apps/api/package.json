@@ -1,0 +1,24 @@
+{
+  "name": "@ballast/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "build": "echo 'No build step required for Express API'",
+    "start": "node --import ./src/register.mjs src/index.js",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@ballast/shared": "workspace:*",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "resend": "^6.7.0",
+    "stripe": "^20.1.2",
+    "zod": "^4.3.5"
+  }
+}

@@ -1,0 +1,61 @@
+#!/usr/bin/env node
+
+/**
+ * Resets the database by deleting all data from all tables.
+ * Useful for development/testing - preserves schema, clears data.
+ *
+ * Usage: pnpm --filter @ballast/shared db:reset
+ */
+
+import { PrismaClient } from "@prisma/client"
+
+const prisma = new PrismaClient()
+
+const reset = async () => {
+  console.log("🗑️  Resetting database...")
+
+  // Delete in order to respect foreign key constraints
+  await prisma.catalogImage.deleteMany()
+  console.log("   ✓ Cleared catalog images")
+
+  await prisma.orderItem.deleteMany()
+  console.log("   ✓ Cleared order items")
+
+  await prisma.refund.deleteMany()
+  console.log("   ✓ Cleared refunds")
+
+  await prisma.order.deleteMany()
+  console.log("   ✓ Cleared orders")
+
+  await prisma.contactSubmission.deleteMany()
+  console.log("   ✓ Cleared contact submissions")
+
+  await prisma.communicationEmail.deleteMany()
+  console.log("   ✓ Cleared communication emails")
+
+  await prisma.verificationToken.deleteMany()
+  console.log("   ✓ Cleared verification tokens")
+
+  await prisma.user.deleteMany()
+  console.log("   ✓ Cleared users")
+
+  await prisma.product.deleteMany()
+  console.log("   ✓ Cleared products")
+
+  await prisma.service.deleteMany()
+  console.log("   ✓ Cleared services")
+
+  await prisma.historyEvent.deleteMany()
+  console.log("   ✓ Cleared history events")
+
+  console.log("✅ Database reset complete!")
+}
+
+reset()
+  .catch((error) => {
+    console.error("❌ Reset failed:", error)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })

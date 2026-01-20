@@ -1,0 +1,29 @@
+{
+  "name": "ballast",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Financing & Subscriptions Management Platform",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{js,jsx,json,md}\"",
+    "docs": "jsdoc -c jsdoc.json",
+    "docs:watch": "jsdoc -c jsdoc.json --watch"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.2",
+    "prettier": "^3.7.4",
+    "jsdoc": "^4.0.5"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

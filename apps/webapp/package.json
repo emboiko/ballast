@@ -1,0 +1,24 @@
+{
+  "name": "@ballast/webapp",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3001",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@ballast/shared": "workspace:^",
+    "@square/web-sdk": "^2.1.0",
+    "@stripe/react-stripe-js": "^5.4.1",
+    "@stripe/stripe-js": "^8.6.1",
+    "braintree-web": "^3.95.0",
+    "braintree-web-drop-in": "^1.38.0",
+    "next": "^16.1.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "styled-components": "^6.3.5"
+  }
+}

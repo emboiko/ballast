@@ -1,0 +1,295 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// Payment processors we support
+enum PaymentProcessor {
+  STRIPE
+  BRAINTREE
+  SQUARE
+  AUTHORIZE
+}
+
+// Types of verification tokens
+enum TokenType {
+  EMAIL_VERIFICATION
+  EMAIL_CHANGE
+  PASSWORD_RESET
+  ACCOUNT_REACTIVATION
+}
+
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
+
+enum CommunicationDirection {
+  INBOUND
+  OUTBOUND
+}
+
+model User {
+  id                   String    @id @default(cuid())
+  email                String    @unique
+  passwordHash         String?
+  authProvider         AuthProvider @default(LOCAL)
+  googleSubject        String?   @unique
+  emailVerified        Boolean   @default(false)
+  isAdmin              Boolean   @default(false)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  archivedAt           DateTime? // null = active, set = archived (soft deleted)
+  bannedAt             DateTime? // null = not banned, set = banned
+  banReasonInternal    String?   // internal admin note
+  tokensInvalidBefore  DateTime? // JWTs issued before this are rejected
+
+  // Processor-specific customer IDs (a user may have accounts with multiple processors)
+  stripeCustomerId     String?   @unique
+  braintreeCustomerId  String?   @unique
+  squareCustomerId     String?   @unique
+  authorizeCustomerId  String?   @unique
+
+  // User info (billing + contact)
+  fullName             String?   @db.VarChar(200)
+  phoneNumber          String?   @db.VarChar(20)
+  billingAddressLine1  String?   @db.VarChar(200)
+  billingAddressLine2  String?   @db.VarChar(200)
+  billingCity          String?   @db.VarChar(100)
+  billingRegion        String?   @db.VarChar(100)
+  billingPostalCode    String?   @db.VarChar(20)
+  billingCountry       String?   @db.VarChar(2)
+
+  orders               Order[]
+  requestedRefunds     Refund[]       @relation("RequestedBy")
+  processedRefunds     Refund[]       @relation("ProcessedBy")
+  contactSubmissions   ContactSubmission[]
+  communicationEmails  CommunicationEmail[]
+  // TODO: Add financingPlans and subscriptions relations
+}
+
+model VerificationToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  type      TokenType @default(EMAIL_VERIFICATION)
+  newEmail  String?   // Only used for EMAIL_CHANGE tokens
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+}
+
+model Order {
+  id                 String           @id @default(cuid())
+  userId             String
+  user               User             @relation(fields: [userId], references: [id])
+
+  // Processor-agnostic fields
+  processor          PaymentProcessor
+  processorPaymentId String           @unique // Stripe PaymentIntent ID, Braintree Transaction ID, etc.
+  
+  // Money stored as cents (integer)
+  amountCents        Int
+  currency           String           @default("usd")
+  status             String           // pending, succeeded, failed
+  
+  // Refund tracking
+  refundedAmountCents Int            @default(0)
+  refundStatus        String?        // pending, approved, rejected
+  
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  refunds            Refund[]
+  items              OrderItem[]
+
+  @@index([userId])
+  @@index([processor, processorPaymentId])
+}
+
+model Refund {
+  id                String   @id @default(cuid())
+  orderId           String
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Processor-specific refund ID (only set after admin processes refund)
+  processorRefundId String?  @unique // Stripe refund ID, etc.
+  
+  // Refund amount (only set after admin processes refund)
+  amountCents       Int?
+  currency          String   @default("usd")
+  
+  status            String   // pending, approved, rejected, processed, failed
+  reason            String?  // User-provided reason for refund request
+  
+  requestedBy       String
+  requestedByUser   User     @relation("RequestedBy", fields: [requestedBy], references: [id])
+  processedBy       String?
+  processedByUser   User?    @relation("ProcessedBy", fields: [processedBy], references: [id])
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([processorRefundId])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  // Item details
+  itemId      String   // Original item ID from cart
+  name        String
+  priceCents  Int      // Price per unit in cents
+  quantity    Int      @default(1)
+  type        String   @default("item") // "item" or "service"
+  
+  // Future: thumbnail URL
+  thumbnailUrl String?
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([orderId])
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  description  String
+  priceCents   Int
+  category     String
+  subcategory  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  images       CatalogImage[]
+
+  @@index([slug])
+  @@index([category])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model Service {
+  id              String   @id @default(cuid())
+  slug            String   @unique
+  name            String
+  description     String
+  longDescription String?
+  priceCents      Int
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  images          CatalogImage[]
+
+  @@index([slug])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model ContactSubmission {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  name      String   @db.VarChar(200)
+  email     String   @db.VarChar(255)
+  subject   String?  @db.VarChar(500)
+  message   String   @db.VarChar(5000)
+  
+  readAt    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@index([readAt])
+}
+
+model CommunicationEmail {
+  id           String                 @id @default(cuid())
+  direction    CommunicationDirection
+  status       String
+
+  resendEmailId String?  @unique
+  messageId     String?  @unique
+  inReplyTo     String?
+  references    String[]
+  threadKey     String
+
+  subject      String?
+  fromEmail    String
+  fromName     String?
+  toEmails     String[]
+
+  textBody     String?
+  htmlBody     String?
+  headers      Json?
+
+  receivedAt   DateTime?
+  readAt       DateTime?
+
+  userId       String?
+  user         User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt    DateTime               @default(now())
+  updatedAt    DateTime               @updatedAt
+
+  @@index([threadKey])
+  @@index([fromEmail])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([readAt])
+}
+
+model CatalogImage {
+  id        String   @id @default(cuid())
+  productId String?
+  serviceId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  service   Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  isPrimary Boolean  @default(false)
+  sortOrder Int      @default(0)
+  filename  String?
+  mimeType  String
+  sizeBytes Int
+  data      Bytes
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@index([serviceId])
+  @@index([isPrimary])
+  @@index([sortOrder])
+}
+
+model HistoryEvent {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  action     String
+  changes    Json
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+}
+
+model SystemEvent {
+  id         String   @id @default(cuid())
+  eventType  String
+  entityType String?
+  entityId   String?
+  payload    Json?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([eventType, createdAt])
+}

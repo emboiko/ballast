@@ -1,0 +1,16 @@
+{
+  "source": {
+    "include": ["./packages/shared/src", "./apps"],
+    "includePattern": "\\.(js|jsx)$",
+    "exclude": ["node_modules", "dist", "build", ".next"]
+  },
+  "opts": {
+    "destination": "./docs",
+    "recurse": true
+  },
+  "plugins": [],
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": true
+  }
+}

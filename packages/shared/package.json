@@ -1,0 +1,59 @@
+{
+  "name": "@ballast/shared",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./src/config/env.js": {
+      "types": "./src/config/env.d.ts",
+      "default": "./src/config/env.js"
+    },
+    "./src/config/env-warnings.js": {
+      "types": "./src/config/env-warnings.d.ts",
+      "default": "./src/config/env-warnings.js"
+    },
+    "./src/db/client.js": {
+      "types": "./src/db/client.d.ts",
+      "default": "./src/db/client.js"
+    },
+    "./src/money.js": {
+      "types": "./src/money.d.ts",
+      "default": "./src/money.js"
+    },
+    "./src/fonts": {
+      "default": "./src/fonts/index.js"
+    },
+    "./src/styles/globals.css": {
+      "default": "./src/styles/globals.css"
+    },
+    "./src/img": {
+      "default": "./src/img/*"
+    },
+    "./src/utils/auth.js": {
+      "default": "./src/utils/auth.js"
+    }
+  },
+  "scripts": {
+    "db:generate": "prisma generate --schema=prisma/schema.prisma",
+    "db:sync": "node scripts/db-sync.js",
+    "db:migrate": "prisma migrate dev --schema=prisma/schema.prisma",
+    "db:deploy": "prisma migrate deploy --schema=prisma/schema.prisma",
+    "db:push": "prisma db push --schema=prisma/schema.prisma",
+    "db:seed:catalog": "node scripts/seed-catalog.js",
+    "db:seed:events": "node scripts/seed-events.js",
+    "db:studio": "prisma studio --config=prisma.config.ts",
+    "db:reset": "node scripts/db-reset.js"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.2.0",
+    "@prisma/client": "^7.2.0",
+    "dotenv": "^16.4.0",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "prisma": "^7.2.0"
+  },
+  "peerDependencies": {
+    "next": "^16.0.0"
+  }
+}

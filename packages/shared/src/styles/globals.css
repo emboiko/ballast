@@ -1,0 +1,139 @@
+/* CSS Variables - Shared between webapp and admin */
+:root {
+  --bg-primary: #F7F8FA;
+  --bg-secondary: #EEF2F6;
+  --bg-tertiary: #FFFFFF;
+
+  --text-primary: #1A2230;
+  --text-secondary: #5B6475;
+
+  --border-color: #D3DBE6;
+
+  --error-color: #DC3F3F;
+
+  --button-primary-bg: #168A5A;
+  --button-primary-hover: #0F6E48;
+  --button-primary-text: #FFFFFF;
+
+  --button-danger-bg: #DC3F3F;
+  --button-danger-hover: #B73535;
+
+  --button-warning-bg: #F08A00;
+  --button-warning-hover: #D37700;
+
+  --link-color: #0F9D62;
+  --link-hover: #0C7E4F;
+
+  --overlay-hover-light: rgba(15, 23, 32, 0.06);
+  --overlay-hover-dark: rgba(255, 255, 255, 0.08);
+
+  --status-success-bg: rgba(22, 138, 90, 0.10);
+  --status-success-bg-strong: rgba(22, 138, 90, 0.16);
+  --status-success-border: rgba(22, 138, 90, 0.30);
+
+  --status-warning-bg: rgba(240, 138, 0, 0.16);
+  --status-warning-border: rgba(240, 138, 0, 0.32);
+
+  --status-info-bg: rgba(91, 100, 117, 0.12);
+  --status-info-border: rgba(91, 100, 117, 0.28);
+
+  --status-error-bg: rgba(220, 63, 63, 0.10);
+  --status-error-bg-strong: rgba(220, 63, 63, 0.16);
+  --status-error-border: rgba(220, 63, 63, 0.30);
+
+  --backdrop-color: rgba(0, 0, 0, 0.55);
+  --shadow-color: rgba(15, 23, 32, 0.22);
+  --shadow-light: rgba(15, 23, 32, 0.06);
+  --shadow-medium: rgba(15, 23, 32, 0.10);
+
+  /* Focus ring for accessibility */
+  --focus-ring: rgba(15, 157, 98, 0.35);
+}
+
+[data-theme="dark"] {
+  --bg-primary: #0B1220;
+  --bg-secondary: #111A2D;
+  --bg-tertiary: #16213A;
+
+  --text-primary: #EAF0FF;
+  --text-secondary: #A6B3D1;
+
+  --border-color: #21304D;
+
+  --error-color: #FF6B6B;
+
+  --button-primary-bg: #2EE59D;
+  --button-primary-hover: #22C989;
+  --button-primary-text: #04150F;
+
+  --button-danger-bg: #FF5A5A;
+  --button-danger-hover: #E04C4C;
+
+  --button-warning-bg: #FFB020;
+  --button-warning-hover: #E49A1B;
+
+  --link-color: #44F2AE;
+  --link-hover: #73F7C6;
+
+  --overlay-hover-light: rgba(255, 255, 255, 0.08);
+  --overlay-hover-dark: rgba(0, 0, 0, 0.10);
+
+  --status-success-bg: rgba(46, 229, 157, 0.18);
+  --status-success-bg-strong: rgba(46, 229, 157, 0.22);
+  --status-success-border: rgba(46, 229, 157, 0.35);
+
+  --status-warning-bg: rgba(255, 176, 32, 0.18);
+  --status-warning-border: rgba(255, 176, 32, 0.35);
+
+  --status-info-bg: rgba(166, 179, 209, 0.14);
+  --status-info-border: rgba(166, 179, 209, 0.28);
+
+  --status-error-bg: rgba(255, 90, 90, 0.16);
+  --status-error-bg-strong: rgba(255, 90, 90, 0.24);
+  --status-error-border: rgba(255, 90, 90, 0.35);
+
+  --backdrop-color: rgba(0, 0, 0, 0.78);
+  --shadow-color: rgba(0, 0, 0, 0.60);
+  --shadow-light: rgba(0, 0, 0, 0.30);
+  --shadow-medium: rgba(0, 0, 0, 0.40);
+
+  /* Focus ring for accessibility */
+  --focus-ring: rgba(68, 242, 174, 0.45);
+}
+
+/* Box-sizing reset - Shared between webapp and admin */
+* {
+  box-sizing: border-box;
+}
+
+/* Consistent focus behavior for all inputs */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+}
+
+/* Consistent focus rings for all links */
+a:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus-ring);
+  border-radius: 2px;
+}
+
+/* Body reset - Shared between webapp and admin */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+/* Monospace font for code, order IDs, etc. */
+code,
+pre,
+.mono,
+[data-font="mono"] {
+  font-family: var(--font-mono), monospace;
+}

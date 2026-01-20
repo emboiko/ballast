@@ -1,0 +1,59 @@
+import { config } from "dotenv"
+import { dirname, join } from "path"
+import { existsSync } from "fs"
+
+/**
+ * Load environment variables for the current app
+ * Looks for .env.local first, then .env in the current working directory
+ * and walks upward until the repo root.
+ */
+export const loadEnv = () => {
+  const visitedDirs = new Set()
+  let currentDir = process.cwd()
+
+  while (!visitedDirs.has(currentDir)) {
+    visitedDirs.add(currentDir)
+
+    const envLocalPath = join(currentDir, ".env.local")
+    if (existsSync(envLocalPath)) {
+      config({ path: envLocalPath })
+    }
+
+    const envPath = join(currentDir, ".env")
+    if (existsSync(envPath)) {
+      config({ path: envPath })
+    }
+
+    const hasWorkspaceMarker =
+      existsSync(join(currentDir, "pnpm-workspace.yaml")) ||
+      existsSync(join(currentDir, ".git"))
+    if (hasWorkspaceMarker) {
+      break
+    }
+
+    const parentDir = dirname(currentDir)
+    if (parentDir === currentDir) {
+      break
+    }
+    currentDir = parentDir
+  }
+}
+
+/**
+ * Get required environment variable (throws if missing)
+ * Use this for variables that must be set for the app to function.
+ * For optional variables with defaults, use process.env[key] ?? defaultValue directly.
+ *
+ * @param {string} key - Environment variable key
+ * @returns {string}
+ * @throws {Error} If variable is not set
+ * @example
+ * const port = getRequiredEnvVar("PORT")
+ */
+export const getRequiredEnvVar = (key) => {
+  const value = process.env[key]
+  if (value === undefined) {
+    throw new Error(`Required environment variable ${key} is not set`)
+  }
+  return value
+}
