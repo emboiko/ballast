@@ -6,6 +6,9 @@
       "includeFiles": "**"
     }
   },
+  "env": {
+    "NODE_OPTIONS": "--experimental-loader ./apps/api/src/loader.mjs"
+  },
   "rewrites": [
     {
       "source": "/(.*)",
