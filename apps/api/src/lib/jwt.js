@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken"
-import { JWT_SECRET, IS_PRODUCTION } from "@/constants.js"
+import { JWT_SECRET, IS_PRODUCTION } from "../constants.js"
 
 export const WEB_AUTH_COOKIE_NAME = "auth_token"
 export const ADMIN_AUTH_COOKIE_NAME = "admin_auth_token"

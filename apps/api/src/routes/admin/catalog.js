@@ -4,8 +4,8 @@ import {
   CATALOG_IMAGE_ALLOWED_MIME_TYPES,
   CATALOG_IMAGE_MAX_COUNT,
   CATALOG_IMAGE_MAX_SIZE_BYTES,
-} from "@/constants.js"
-import { requireAdmin } from "@/middleware/admin.js"
+} from "../../constants.js"
+import { requireAdmin } from "../../middleware/admin.js"
 import {
   listCatalogProductsAdmin,
   createCatalogProduct,
@@ -21,7 +21,7 @@ import {
   updateCatalogServiceImages,
   deleteCatalogProductImage,
   deleteCatalogServiceImage,
-} from "@/lib/admin/index.js"
+} from "../../lib/admin/index.js"
 
 const router = Router()
 

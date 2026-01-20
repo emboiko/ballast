@@ -1,4 +1,4 @@
-import prisma from "@ballast/shared/src/db/client.js"
+import prisma from "../../../../../packages/shared/src/db/client.js"
 
 /**
  * List contact submissions for admin UI.

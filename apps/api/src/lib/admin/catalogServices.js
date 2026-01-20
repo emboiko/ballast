@@ -1,9 +1,9 @@
 import { z } from "zod"
-import prisma from "@ballast/shared/src/db/client.js"
+import prisma from "../../../../../packages/shared/src/db/client.js"
 import {
   getPrimaryImageUrl,
   serializeCatalogImages,
-} from "@/lib/catalog/images.js"
+} from "../catalog/images.js"
 
 const normalizeOptionalString = (value) => {
   if (typeof value !== "string") {

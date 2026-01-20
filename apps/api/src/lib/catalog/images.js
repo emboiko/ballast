@@ -1,5 +1,5 @@
-import { API_URL } from "@/constants.js"
-import prisma from "@ballast/shared/src/db/client.js"
+import { API_URL } from "../../constants.js"
+import prisma from "../../../../../packages/shared/src/db/client.js"
 
 const buildCatalogImageUrl = (imageId) => {
   if (!imageId) {

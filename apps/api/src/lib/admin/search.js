@@ -1,4 +1,4 @@
-import prisma from "@ballast/shared/src/db/client.js"
+import prisma from "../../../../../packages/shared/src/db/client.js"
 
 /**
  * Search users by email (partial match, case-insensitive)

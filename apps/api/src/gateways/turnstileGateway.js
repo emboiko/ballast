@@ -1,7 +1,7 @@
 import {
   TURNSTILE_SECRET_KEY,
   TURNSTILE_VERIFY_URL,
-} from "@/constants.js"
+} from "../constants.js"
 
 /**
  * Verify a Turnstile token with Cloudflare

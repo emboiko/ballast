@@ -1,6 +1,6 @@
 import { Router } from "express"
-import { requireAuth, requireVerified } from "@/middleware/auth.js"
-import { fetchOrders, fetchOrder, createRefundRequest } from "@/lib/orders.js"
+import { requireAuth, requireVerified } from "../middleware/auth.js"
+import { fetchOrders, fetchOrder, createRefundRequest } from "../lib/orders.js"
 
 const router = Router()
 

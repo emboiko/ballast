@@ -11,6 +11,8 @@ export const loadEnv = () => {
   const visitedDirs = new Set()
   let currentDir = process.cwd()
 
+  let workspaceRoot = null
+
   while (!visitedDirs.has(currentDir)) {
     visitedDirs.add(currentDir)
 
@@ -28,6 +30,7 @@ export const loadEnv = () => {
       existsSync(join(currentDir, "pnpm-workspace.yaml")) ||
       existsSync(join(currentDir, ".git"))
     if (hasWorkspaceMarker) {
+      workspaceRoot = currentDir
       break
     }
 
@@ -36,6 +39,23 @@ export const loadEnv = () => {
       break
     }
     currentDir = parentDir
+  }
+
+  if (workspaceRoot) {
+    const sharedEnvLocalPath = join(
+      workspaceRoot,
+      "packages",
+      "shared",
+      ".env.local"
+    )
+    if (existsSync(sharedEnvLocalPath)) {
+      config({ path: sharedEnvLocalPath })
+    }
+
+    const sharedEnvPath = join(workspaceRoot, "packages", "shared", ".env")
+    if (existsSync(sharedEnvPath)) {
+      config({ path: sharedEnvPath })
+    }
   }
 }
 

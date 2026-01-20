@@ -1,6 +1,6 @@
 import Stripe from "stripe"
-import prisma from "@ballast/shared/src/db/client.js"
-import { STRIPE_SECRET_KEY } from "@/constants.js"
+import prisma from "../../../../packages/shared/src/db/client.js"
+import { STRIPE_SECRET_KEY } from "../constants.js"
 
 let stripe = null
 

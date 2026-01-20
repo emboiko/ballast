@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { handleResendWebhook } from "@/lib/webhooks/resend.js"
+import { handleResendWebhook } from "../../lib/webhooks/resend.js"
 
 const router = Router()
 

@@ -1,5 +1,5 @@
-import prisma from "@ballast/shared/src/db/client.js"
-import { formatMoney } from "@ballast/shared/src/money.js"
+import prisma from "../../../../packages/shared/src/db/client.js"
+import { formatMoney } from "../../../../packages/shared/src/money.js"
 
 export const SYSTEM_EVENT_DEFINITIONS = {
   "user.created": {

@@ -1,11 +1,11 @@
 import { Router } from "express"
-import { requireAdmin } from "@/middleware/admin.js"
+import { requireAdmin } from "../../middleware/admin.js"
 import {
   listContactSubmissions,
   getContactSubmissionById,
   setContactSubmissionReadStatus,
   deleteContactSubmission,
-} from "@/lib/admin/index.js"
+} from "../../lib/admin/index.js"
 
 const router = Router()
 

@@ -1,6 +1,6 @@
 import { Router } from "express"
-import { requireAuth, requireVerified } from "@/middleware/auth.js"
-import { calculateCartFees } from "@/lib/fees.js"
+import { requireAuth, requireVerified } from "../middleware/auth.js"
+import { calculateCartFees } from "../lib/fees.js"
 
 const router = Router()
 

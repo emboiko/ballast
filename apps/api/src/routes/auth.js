@@ -6,8 +6,8 @@ import {
   GOOGLE_OAUTH_CLIENT_SECRET,
   GOOGLE_OAUTH_STATE_COOKIE_NAME,
   GOOGLE_OAUTH_STATE_COOKIE_OPTIONS,
-} from "@/constants.js"
-import { signToken, setWebAuthCookie, clearWebAuthCookie } from "@/lib/jwt.js"
+} from "../constants.js"
+import { signToken, setWebAuthCookie, clearWebAuthCookie } from "../lib/jwt.js"
 import {
   signup,
   login,
@@ -21,17 +21,17 @@ import {
   archiveAccount,
   verifyAccountReactivation,
   loginWithGoogle,
-} from "@/lib/auth.js"
-import { requireAuth } from "@/middleware/auth.js"
+} from "../lib/auth.js"
+import { requireAuth } from "../middleware/auth.js"
 import {
   buildWebappRedirect,
   clearGoogleOAuthStateCookie,
-} from "@/lib/utils/google.js"
+} from "../lib/utils/google.js"
 import {
   buildGoogleAuthUrl,
   exchangeGoogleCode,
   fetchGoogleUserInfo,
-} from "@/gateways/googleGateway.js"
+} from "../gateways/googleGateway.js"
 
 const router = Router()
 

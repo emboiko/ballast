@@ -2,9 +2,9 @@ import {
   WEB_AUTH_COOKIE_NAME,
   verifyToken,
   clearWebAuthCookie,
-} from "@/lib/jwt.js"
-import prisma from "@ballast/shared/src/db/client.js"
-import { userInfoSelectFields } from "@/lib/userInfo.js"
+} from "../lib/jwt.js"
+import prisma from "../../../../packages/shared/src/db/client.js"
+import { userInfoSelectFields } from "../lib/userInfo.js"
 
 /**
  * Middleware to verify JWT token and attach user to request

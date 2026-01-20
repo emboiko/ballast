@@ -40,7 +40,7 @@ const run = async () => {
   await new Promise((resolve, reject) => {
     const child = spawn(
       process.execPath,
-      ["--watch", "--import", "./src/register.mjs", "src/index.js"],
+      ["--watch", "src/index.js"],
       {
         cwd: apiRoot,
         stdio: "inherit",

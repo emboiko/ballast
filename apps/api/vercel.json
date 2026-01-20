@@ -3,11 +3,8 @@
   "installCommand": "cd ../.. && pnpm install",
   "functions": {
     "api/index.js": {
-      "includeFiles": ["../src/**", "../../packages/shared/**"]
+      "includeFiles": "{../src/**,../../packages/shared/**}"
     }
-  },
-  "env": {
-    "NODE_OPTIONS": "--experimental-loader ./apps/api/src/loader.mjs"
   },
   "rewrites": [
     {

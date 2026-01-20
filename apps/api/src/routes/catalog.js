@@ -2,12 +2,12 @@ import { Router } from "express"
 import {
   listCatalogProducts,
   getCatalogProductBySlug,
-} from "@/lib/catalog/products.js"
+} from "../lib/catalog/products.js"
 import {
   listCatalogServices,
   getCatalogServiceBySlug,
-} from "@/lib/catalog/services.js"
-import { getCatalogImageById } from "@/lib/catalog/images.js"
+} from "../lib/catalog/services.js"
+import { getCatalogImageById } from "../lib/catalog/images.js"
 
 const router = Router()
 

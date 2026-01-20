@@ -1,8 +1,8 @@
-import prisma from "@ballast/shared/src/db/client.js"
+import prisma from "../../../../../packages/shared/src/db/client.js"
 import {
   getPrimaryImageUrl,
   serializeCatalogImages,
-} from "@/lib/catalog/images.js"
+} from "./images.js"
 
 export const listCatalogProducts = async () => {
   const products = await prisma.product.findMany({

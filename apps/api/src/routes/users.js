@@ -1,10 +1,10 @@
 import { Router } from "express"
-import prisma from "@ballast/shared/src/db/client.js"
-import { requireAuth } from "@/middleware/auth.js"
+import prisma from "../../../../packages/shared/src/db/client.js"
+import { requireAuth } from "../middleware/auth.js"
 import {
   buildUserInfoUpdateData,
   userInfoSelectFields,
-} from "@/lib/userInfo.js"
+} from "../lib/userInfo.js"
 
 const router = Router()
 

@@ -1,6 +1,6 @@
 import { Router } from "express"
-import { submitContactForm } from "@/lib/contact.js"
-import { optionalAuth } from "@/middleware/auth.js"
+import { submitContactForm } from "../lib/contact.js"
+import { optionalAuth } from "../middleware/auth.js"
 
 const router = Router()
 

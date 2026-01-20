@@ -1,16 +1,16 @@
 import crypto from "crypto"
-import prisma from "@ballast/shared/src/db/client.js"
+import prisma from "../../../../../packages/shared/src/db/client.js"
 import {
   sendAccountReactivationEmail,
   sendAdminAccessGrantedEmail,
-} from "@/gateways/emailGateway.js"
-import { userInfoSelectFields } from "@/lib/userInfo.js"
+} from "../../gateways/emailGateway.js"
+import { userInfoSelectFields } from "../userInfo.js"
 import {
   addUtcDays,
   addUtcMonths,
   toUtcDayStart,
   toUtcMonthStart,
-} from "@/lib/utils/dateBuckets.js"
+} from "../utils/dateBuckets.js"
 
 /**
  * Get a single user by ID with full details

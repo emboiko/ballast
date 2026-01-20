@@ -5,7 +5,7 @@ import {
   GOOGLE_OAUTH_STATE_COOKIE_NAME,
   GOOGLE_OAUTH_STATE_COOKIE_OPTIONS,
   WEBAPP_URL,
-} from "@/constants.js"
+} from "../../constants.js"
 
 /**
  * @param {Record<string, string>} [params]

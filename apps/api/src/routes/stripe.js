@@ -1,6 +1,6 @@
 import { Router } from "express"
-import { requireAuth, requireVerified } from "@/middleware/auth.js"
-import { createStripeIntent, confirmStripePayment } from "@/lib/stripe.js"
+import { requireAuth, requireVerified } from "../middleware/auth.js"
+import { createStripeIntent, confirmStripePayment } from "../lib/stripe.js"
 
 const router = Router()
 

@@ -1,10 +1,10 @@
-import prisma from "@ballast/shared/src/db/client.js"
+import prisma from "../../../../../packages/shared/src/db/client.js"
 import {
   addUtcDays,
   addUtcMonths,
   toUtcDayStart,
   toUtcMonthStart,
-} from "@/lib/utils/dateBuckets.js"
+} from "../utils/dateBuckets.js"
 
 /**
  * List orders for admin UI with optional filtering.

@@ -2,11 +2,11 @@ import {
   getOrCreateCustomer,
   createPaymentIntent,
   confirmPaymentIntent,
-} from "@/gateways/stripeGateway.js"
-import prisma from "@ballast/shared/src/db/client.js"
-import { formatMoney } from "@ballast/shared/src/money.js"
-import { sendOrderConfirmationEmail } from "@/gateways/emailGateway.js"
-import { recordSystemEvent } from "@/lib/systemEvents.js"
+} from "../gateways/stripeGateway.js"
+import prisma from "../../../../packages/shared/src/db/client.js"
+import { formatMoney } from "../../../../packages/shared/src/money.js"
+import { sendOrderConfirmationEmail } from "../gateways/emailGateway.js"
+import { recordSystemEvent } from "./systemEvents.js"
 
 /**
  * Create a Stripe payment intent

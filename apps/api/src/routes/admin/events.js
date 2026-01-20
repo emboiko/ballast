@@ -1,6 +1,6 @@
 import { Router } from "express"
-import { requireAdmin } from "@/middleware/admin.js"
-import { listSystemEvents } from "@/lib/admin/events.js"
+import { requireAdmin } from "../../middleware/admin.js"
+import { listSystemEvents } from "../../lib/admin/events.js"
 
 const router = Router()
 

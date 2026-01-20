@@ -1,15 +1,15 @@
 import bcrypt from "bcryptjs"
 import crypto from "crypto"
-import prisma from "@ballast/shared/src/db/client.js"
-import { BCRYPT_SALT_ROUNDS } from "@/constants.js"
-import { verifyTurnstile } from "@/gateways/turnstileGateway.js"
+import prisma from "../../../../packages/shared/src/db/client.js"
+import { BCRYPT_SALT_ROUNDS } from "../constants.js"
+import { verifyTurnstile } from "../gateways/turnstileGateway.js"
 import {
   sendWelcomeEmail,
   sendEmailChangeVerification,
   sendPasswordChangedNotification,
   sendPasswordResetEmail,
-} from "@/gateways/emailGateway.js"
-import { recordSystemEvent } from "@/lib/systemEvents.js"
+} from "../gateways/emailGateway.js"
+import { recordSystemEvent } from "./systemEvents.js"
 
 const isGoogleAuthUser = (user) => {
   if (!user) {

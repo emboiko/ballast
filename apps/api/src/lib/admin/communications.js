@@ -1,11 +1,11 @@
-import prisma from "@ballast/shared/src/db/client.js"
-import { RESEND_FROM_EMAIL } from "@/constants.js"
-import { sendReplyEmail } from "@/gateways/emailGateway.js"
+import prisma from "../../../../../packages/shared/src/db/client.js"
+import { RESEND_FROM_EMAIL } from "../../constants.js"
+import { sendReplyEmail } from "../../gateways/emailGateway.js"
 import {
   uniqueStrings,
   normalizeEmailAddress,
   toSimpleHtml,
-} from "@/lib/utils/email.js"
+} from "../utils/email.js"
 
 /**
  * List communication emails for admin UI.

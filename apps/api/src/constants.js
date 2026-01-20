@@ -5,8 +5,8 @@
  * for the API application. All process.env access should happen here.
  */
 
-import { loadEnv } from "@ballast/shared/src/config/env.js"
-import { createEnvWarningHelpers } from "@ballast/shared/src/config/env-warnings.js"
+import { loadEnv } from "../../../packages/shared/src/config/env.js"
+import { createEnvWarningHelpers } from "../../../packages/shared/src/config/env-warnings.js"
 
 // Load environment variables before evaluating constants
 loadEnv()

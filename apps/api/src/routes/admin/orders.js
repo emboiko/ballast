@@ -1,11 +1,11 @@
 import { Router } from "express"
-import { requireAdmin } from "@/middleware/admin.js"
+import { requireAdmin } from "../../middleware/admin.js"
 import {
   listOrders,
   getOrderById,
   getOrderStats,
   getOrderGrowth,
-} from "@/lib/admin/orders.js"
+} from "../../lib/admin/orders.js"
 
 const router = Router()
 

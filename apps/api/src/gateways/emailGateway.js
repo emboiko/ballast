@@ -6,8 +6,8 @@ import {
   API_URL,
   ADMIN_URL,
   WEBAPP_URL,
-} from "@/constants.js"
-import { escapeHtml } from "@/lib/utils/email.js"
+} from "../constants.js"
+import { escapeHtml } from "../lib/utils/email.js"
 
 let resend = null
 

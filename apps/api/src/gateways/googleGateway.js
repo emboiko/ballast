@@ -1,4 +1,4 @@
-import { GOOGLE_OAUTH_ENDPOINTS } from "@/constants.js"
+import { GOOGLE_OAUTH_ENDPOINTS } from "../constants.js"
 
 /**
  * @param {object} options

@@ -1,5 +1,5 @@
 import { Router } from "express"
-import { requireAdmin } from "@/middleware/admin.js"
+import { requireAdmin } from "../../middleware/admin.js"
 import {
   getUserById,
   getUserStats,
@@ -11,7 +11,7 @@ import {
   banUser,
   unbanUser,
   permanentlyDeleteUser,
-} from "@/lib/admin/index.js"
+} from "../../lib/admin/index.js"
 
 const router = Router()
 

@@ -1,15 +1,15 @@
-import prisma from "@ballast/shared/src/db/client.js"
+import prisma from "../../../../../packages/shared/src/db/client.js"
 import {
   deriveThreadKey,
   getHeaderValue,
   normalizeEmailAddress,
   parseMessageIdList,
-} from "@/lib/utils/email.js"
+} from "../utils/email.js"
 import {
   getReceivedEmailContent,
   verifyResendWebhook,
-} from "@/gateways/emailGateway.js"
-import { recordSystemEvent } from "@/lib/systemEvents.js"
+} from "../../gateways/emailGateway.js"
+import { recordSystemEvent } from "../systemEvents.js"
 
 const getSvixHeaderString = (headerValue) => {
   if (typeof headerValue === "string") {

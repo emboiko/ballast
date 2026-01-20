@@ -1,5 +1,5 @@
-import prisma from "@ballast/shared/src/db/client.js"
-import { verifyTurnstile } from "@/gateways/turnstileGateway.js"
+import prisma from "../../../../packages/shared/src/db/client.js"
+import { verifyTurnstile } from "../gateways/turnstileGateway.js"
 
 /**
  * Submit a contact form

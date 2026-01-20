@@ -2,8 +2,8 @@ import {
   ADMIN_AUTH_COOKIE_NAME,
   verifyToken,
   clearAdminAuthCookie,
-} from "@/lib/jwt.js"
-import prisma from "@ballast/shared/src/db/client.js"
+} from "../lib/jwt.js"
+import prisma from "../../../../packages/shared/src/db/client.js"
 
 /**
  * Middleware to verify JWT token and require admin privileges

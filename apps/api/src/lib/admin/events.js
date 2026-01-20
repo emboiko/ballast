@@ -1,5 +1,5 @@
-import prisma from "@ballast/shared/src/db/client.js"
-import { formatSystemEventForAdmin } from "@/lib/systemEvents.js"
+import prisma from "../../../../../packages/shared/src/db/client.js"
+import { formatSystemEventForAdmin } from "../systemEvents.js"
 
 const buildDateFilter = ({ before, after }) => {
   const filters = []
