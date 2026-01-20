@@ -523,29 +523,15 @@ https://mail.ballast.systems
 
 ## Todo
 
-Various post-deployment todos:
-
-- Support bt, square, and authorize
-- admin: edit user-info section on user-details page
-- Fill the database with actual data for encabulators and ancabulator accessories
-- webapp mobile styles + (page backgrounds? Had a hard time with this one already.)
-- webapp featured items from the catalog (shown at the top when not filtering to a given category)
 - ensure emails/phone numbers are updated in PPs when user updates in DB. We should always keep these in sync. Unsure what the best approach is for pre/post save hooks and what we should and should not try to be using those for. We'll need placeholders for non-stripe PP's if we implement this right away, as we haven't started integrating bt, square or authorize yet- but we'll want to keep that in mind for the future as well.
 
-- Subscriptions:
-- Subscription emails
-- Subscription job
-- webapp + admin integrations
-- re-use a lot of saved-payment method logic (and other logic in general) implemented from financing where possible
+- webapp mobile styles + (page backgrounds? Had a hard time with this one already.)
+- webapp featured items from the catalog (shown at the top when not filtering to a given category)
 
-- Financing plans:
-- Financing emails
-- Financing job
-- Webapp + Admin integrations
-- saved payment methods + default payment method functionality (alongside stripe-link, etc)
-- Financing principal payment via webapp & admin panel
-- Financing and subscription contracts should be generated per-plan and stored in a way that's easily exported to PDF or something that can be handed to a CX-team member or non-developer.
+- Support bt, square, and authorize, and more.
 
+- admin: edit user-info section on user-details page
+- Fill the (prod) database with actual data for encabulators and encabulator accessories
 - Ensure we're using zod and JSdoc correctly and everywhere.
 - clean up select objects with some constants? (user selects at least? these are repetitive)
 - setup debuggers for all 4 apps (webapp, admin panel, API, job server (jobs hasnt began development))
@@ -590,3 +576,19 @@ Various post-deployment todos:
 - admin communications email search functionality?
 - admin panel consent history for ToS/privacy policy acceptance + system to flag updates to these documents & require re-consent (for admin panel users) -> flag resets if we modify ToS -> admin users must ack/sign the modal every time this happens.
 - add optional history tracking to DB (seems to totally suck to do with prisma) -> this was the idea behind the timeline section on the admin panel's user-detail view (WIP).
+
+In progress:
+
+- Subscriptions:
+- Subscription emails
+- Subscription job
+- webapp + admin integrations
+- re-use a lot of saved-payment method logic (and other logic in general) implemented from financing where possible
+
+- Financing plans:
+- Financing emails
+- Financing job
+- Webapp + Admin integrations
+- saved payment methods + default payment method functionality (alongside stripe-link, etc)
+- Financing principal payment via webapp & admin panel
+- Financing and subscription contracts should be generated per-plan and stored in a way that's easily exported to PDF or something that can be handed to a CX-team member or non-developer.
