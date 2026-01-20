@@ -514,6 +514,13 @@ If abuse becomes a real issue, typical next steps include:
 - Each app owns its `constants.js` and keeps all `process.env` access there.
 - When a default value is used because an env var is missing, the app logs a one-time `console.warn` message on startup.
 
+## DNS
+
+https://ballast.systems
+https://admin.ballast.systems
+https://api.ballast.systems
+https://mail.ballast.systems
+
 ## Todo
 
 Various post-deployment todos:
