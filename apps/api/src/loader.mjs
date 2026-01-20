@@ -54,12 +54,38 @@ function resolveAlias(specifier) {
     return pathToFileURL(resolved).href
   }
 
+  if (specifier.startsWith("@ballast/shared/")) {
+    const path = specifier.replace("@ballast/shared/", "")
+    let resolved = resolvePath(
+      projectRoot,
+      "..",
+      "..",
+      "packages",
+      "shared",
+      "src",
+      path
+    )
+
+    if (!extname(resolved)) {
+      const withExt = `${resolved}.js`
+      if (existsSync(withExt)) {
+        resolved = withExt
+      }
+    }
+
+    return pathToFileURL(resolved).href
+  }
+
   return null
 }
 
 export async function resolve(specifier, context, nextResolve) {
   // Only intercept if it's an alias
-  if (specifier.startsWith("@/") || specifier.startsWith("@shared/")) {
+  if (
+    specifier.startsWith("@/") ||
+    specifier.startsWith("@shared/") ||
+    specifier.startsWith("@ballast/shared/")
+  ) {
     const aliasResolved = resolveAlias(specifier)
     if (aliasResolved) {
       return { url: aliasResolved, shortCircuit: true }

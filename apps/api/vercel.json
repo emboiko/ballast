@@ -3,7 +3,7 @@
   "installCommand": "cd ../.. && pnpm install",
   "functions": {
     "api/index.js": {
-      "includeFiles": "**"
+      "includeFiles": ["../src/**", "../../packages/shared/**"]
     }
   },
   "env": {
