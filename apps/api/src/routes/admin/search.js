@@ -4,11 +4,12 @@ import {
   searchUsers,
   searchOrders,
   searchRefunds,
+  searchFinancingPlans,
 } from "../../lib/admin/index.js"
 
 const router = Router()
 
-// GET /admin/search?q=...&type=all|users|orders|refunds&limit=5&offset=0
+// GET /admin/search?q=...&type=all|users|orders|refunds|financing&limit=5&offset=0
 router.get("/", requireAdmin, async (req, res) => {
   try {
     const query = req.query.q || ""
@@ -35,6 +36,10 @@ router.get("/", requireAdmin, async (req, res) => {
 
     if (type === "all" || type === "refunds") {
       results.refunds = await searchRefunds(query, { limit, offset })
+    }
+
+    if (type === "all" || type === "financing") {
+      results.financing = await searchFinancingPlans(query, { limit, offset })
     }
 
     res.json(results)

@@ -8,6 +8,7 @@ import {
   UsersSection,
   OrdersSection,
   RefundsSection,
+  FinancingSection,
 } from "@/components/search/SearchResults"
 import {
   SearchContainer,
@@ -111,7 +112,7 @@ export default function SearchBar() {
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onKeyDown={handleKeyDown}
-          placeholder="Search users, orders, refunds..."
+          placeholder="Search users, orders, refunds, financing..."
           aria-label="Search"
         />
         {query && (
@@ -144,6 +145,11 @@ export default function SearchBar() {
               <RefundsSection
                 refunds={results?.refunds?.refunds}
                 total={results?.refunds?.total}
+                onResultClick={handleResultClick}
+              />
+              <FinancingSection
+                plans={results?.financing?.plans}
+                total={results?.financing?.total}
                 onResultClick={handleResultClick}
               />
               {hasMore && (

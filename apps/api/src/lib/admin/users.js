@@ -44,6 +44,7 @@ export const getUserById = async (userId) => {
         select: {
           orders: true,
           contactSubmissions: true,
+          financingPlans: true,
         },
       },
     },
@@ -59,6 +60,7 @@ export const getUserById = async (userId) => {
       ...user,
       orderCount: user._count.orders,
       contactSubmissionCount: user._count.contactSubmissions,
+      financingPlanCount: user._count.financingPlans,
       _count: undefined,
     },
   }

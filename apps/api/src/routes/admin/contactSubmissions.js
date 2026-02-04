@@ -9,13 +9,15 @@ import {
 
 const router = Router()
 
-// GET /admin/contact-submissions?limit=25&offset=0&unread=true
+// GET /admin/contact-submissions?limit=25&offset=0&unread=true&userId=abc
 router.get("/", requireAdmin, async (req, res) => {
   try {
     const limit = req.query.limit ? parseInt(req.query.limit, 10) : 25
     const offset = req.query.offset ? parseInt(req.query.offset, 10) : 0
     const unreadParam =
       typeof req.query.unread === "string" ? req.query.unread : null
+    const userId =
+      typeof req.query.userId === "string" ? req.query.userId : null
 
     if (Number.isNaN(limit) || limit < 1 || limit > 100) {
       return res.status(400).json({ error: "limit must be between 1 and 100" })
@@ -34,6 +36,7 @@ router.get("/", requireAdmin, async (req, res) => {
       limit,
       offset,
       unreadOnly,
+      userId,
     })
 
     res.json(results)

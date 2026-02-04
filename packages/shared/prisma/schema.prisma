@@ -14,6 +14,31 @@ enum PaymentProcessor {
   AUTHORIZE
 }
 
+enum FinancingPlanStatus {
+  ACTIVE
+  PAID_OFF
+  PAUSED
+  CANCELED
+  DEFAULTED
+}
+
+enum FinancingPaymentType {
+  INSTALLMENT
+  PRINCIPAL
+}
+
+enum FinancingPaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELED
+}
+
+enum FinancingCadence {
+  WEEKLY
+  MONTHLY
+}
+
 // Types of verification tokens
 enum TokenType {
   EMAIL_VERIFICATION
@@ -30,6 +55,13 @@ enum AuthProvider {
 enum CommunicationDirection {
   INBOUND
   OUTBOUND
+}
+
+enum JobRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+  SKIPPED
 }
 
 model User {
@@ -68,7 +100,8 @@ model User {
   processedRefunds     Refund[]       @relation("ProcessedBy")
   contactSubmissions   ContactSubmission[]
   communicationEmails  CommunicationEmail[]
-  // TODO: Add financingPlans and subscriptions relations
+  financingPlans       FinancingPlan[]
+  // TODO: Add subscriptions relations
 }
 
 model VerificationToken {
@@ -104,9 +137,83 @@ model Order {
 
   refunds            Refund[]
   items              OrderItem[]
+  financingPlan      FinancingPlan?
 
   @@index([userId])
   @@index([processor, processorPaymentId])
+}
+
+model FinancingPlan {
+  id                        String               @id @default(cuid())
+  userId                    String
+  user                      User                 @relation(fields: [userId], references: [id])
+  orderId                   String?              @unique
+  order                     Order?               @relation(fields: [orderId], references: [id])
+
+  processor                 PaymentProcessor
+  processorPaymentMethodId  String
+  processorCustomerId       String?
+  processorPaymentMethod    Json?
+
+  currency                  String               @default("usd")
+  totalAmountCents          Int
+  downPaymentCents          Int
+  financedAmountCents       Int
+  remainingBalanceCents     Int
+  installmentAmountCents    Int
+  termCount                 Int
+  interestRateBasisPoints   Int                  @default(0)
+  cadence                   FinancingCadence
+  scheduleJson              Json
+  nextPaymentDate           DateTime?
+  status                    FinancingPlanStatus  @default(ACTIVE)
+  failedPaymentAttempts     Int                  @default(0)
+
+  payments                  FinancingPayment[]
+  contracts                 FinancingContract[]
+
+  createdAt                 DateTime             @default(now())
+  updatedAt                 DateTime             @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([processor, processorPaymentMethodId])
+}
+
+model FinancingPayment {
+  id                 String                 @id @default(cuid())
+  planId             String
+  plan               FinancingPlan          @relation(fields: [planId], references: [id], onDelete: Cascade)
+
+  type               FinancingPaymentType
+  status             FinancingPaymentStatus @default(PENDING)
+  amountCents        Int
+  currency           String                 @default("usd")
+  scheduledFor       DateTime?
+  paidAt             DateTime?
+  failureMessage     String?
+
+  processorPaymentId String?                @unique
+
+  createdAt          DateTime               @default(now())
+  updatedAt          DateTime               @updatedAt
+
+  @@index([planId])
+  @@index([type])
+  @@index([status])
+}
+
+model FinancingContract {
+  id           String        @id @default(cuid())
+  planId       String
+  plan         FinancingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  version      Int           @default(1)
+  html         String
+  createdBy    String?
+  createdAt    DateTime      @default(now())
+
+  @@index([planId])
+  @@index([createdAt])
 }
 
 model Refund {
@@ -290,4 +397,21 @@ model SystemEvent {
 
   @@index([createdAt])
   @@index([eventType, createdAt])
+}
+
+model JobRun {
+  id          String       @id @default(cuid())
+  jobType     String
+  status      JobRunStatus @default(RUNNING)
+  startedAt   DateTime     @default(now())
+  completedAt DateTime?
+  progress    Json?
+  summary     Json?
+  error       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([jobType, createdAt])
+  @@index([status])
+  @@index([startedAt])
 }

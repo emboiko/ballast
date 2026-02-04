@@ -111,13 +111,15 @@ export function SearchProvider({ children }) {
     results &&
     (results.users?.users?.length > 0 ||
       results.orders?.orders?.length > 0 ||
-      results.refunds?.refunds?.length > 0)
+      results.refunds?.refunds?.length > 0 ||
+      results.financing?.plans?.length > 0)
 
   const hasMore =
     results &&
     (results.users?.hasMore ||
       results.orders?.hasMore ||
-      results.refunds?.hasMore)
+      results.refunds?.hasMore ||
+      results.financing?.hasMore)
 
   const value = {
     query,

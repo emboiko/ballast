@@ -34,9 +34,15 @@ export default function AccountSidebar({ activeSection }) {
         <AccountNavItemDisabled title="Coming soon">
           Subscriptions
         </AccountNavItemDisabled>
-        <AccountNavItemDisabled title="Coming soon">
-          Financing
-        </AccountNavItemDisabled>
+        {activeSection === "financing" ? (
+          <AccountNavItemActive as={Link} href="/account/financing">
+            Financing
+          </AccountNavItemActive>
+        ) : (
+          <AccountNavItem as={Link} href="/account/financing">
+            Financing
+          </AccountNavItem>
+        )}
         {activeSection === "settings" ? (
           <AccountNavItemActive as={Link} href="/account/settings">
             Settings

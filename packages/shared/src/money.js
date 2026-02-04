@@ -91,6 +91,14 @@ export const parseMoneyValueToCents = (input) => {
 export const addMoney = (a, b) => a + b
 
 /**
+ * Subtract two cent values.
+ * @param {number} a - Cents
+ * @param {number} b - Cents
+ * @returns {number} Difference in cents
+ */
+export const subtractMoney = (a, b) => a - b
+
+/**
  * Multiply cents by a quantity (e.g., for cart item totals).
  * @param {number} cents - Base amount in cents
  * @param {number} quantity - Integer multiplier

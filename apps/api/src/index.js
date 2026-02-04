@@ -9,6 +9,7 @@ import contactRoutes from "./routes/contact.js"
 import catalogRoutes from "./routes/catalog.js"
 import feesRoutes from "./routes/fees.js"
 import usersRoutes from "./routes/users.js"
+import financingRoutes from "./routes/financing.js"
 import resendWebhookRoutes from "./routes/webhooks/resend.js"
 import adminAuthRoutes from "./routes/admin/auth.js"
 import adminSearchRoutes from "./routes/admin/search.js"
@@ -19,6 +20,8 @@ import adminRefundsRoutes from "./routes/admin/refunds.js"
 import adminOrdersRoutes from "./routes/admin/orders.js"
 import adminCatalogRoutes from "./routes/admin/catalog.js"
 import adminEventsRoutes from "./routes/admin/events.js"
+import adminFinancingRoutes from "./routes/admin/financing.js"
+import adminJobsRoutes from "./routes/admin/jobs.js"
 
 const app = express()
 
@@ -54,6 +57,7 @@ app.use("/contact", contactRoutes)
 app.use("/catalog", catalogRoutes)
 app.use("/fees", feesRoutes)
 app.use("/users", usersRoutes)
+app.use("/financing", financingRoutes)
 
 // Admin routes
 app.use("/admin/auth", adminAuthRoutes)
@@ -65,6 +69,8 @@ app.use("/admin/communications", adminCommunicationsRoutes)
 app.use("/admin/contact-submissions", adminContactSubmissionsRoutes)
 app.use("/admin/catalog", adminCatalogRoutes)
 app.use("/admin/events", adminEventsRoutes)
+app.use("/admin/financing", adminFinancingRoutes)
+app.use("/admin/jobs", adminJobsRoutes)
 
 const isServerlessRuntime = Boolean(process.env.VERCEL)
 

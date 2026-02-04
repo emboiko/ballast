@@ -155,6 +155,16 @@ export const COMMUNICATIONS_PAGE_SIZE = 25
 export const REFUNDS_PAGE_SIZE = 25
 
 // ============================================================================
+// Refunds Configuration
+// ============================================================================
+
+/**
+ * Default page size for refunds list
+ * @type {number}
+ */
+export const JOBS_PAGE_SIZE = 25
+
+// ============================================================================
 // Dashboard Configuration
 // ============================================================================
 

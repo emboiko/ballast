@@ -5,6 +5,7 @@ import PaymentFormWrapper from "@/components/payment/PaymentFormWrapper"
 import { usePayment } from "@/contexts/PaymentContext"
 import { useAuth } from "@/contexts/AuthContext"
 import { formatMoney } from "@ballast/shared/src/money.js"
+import { PAYMENT_PROCESSOR } from "@/constants.js"
 import {
   PaymentContainer,
   SectionHeader,
@@ -18,6 +19,16 @@ import {
   UserInfoHeaderMeta,
   UserInfoSuccessBanner,
   UserInfoBody,
+  PaymentOptionCard,
+  PaymentOptionHeader,
+  PaymentOptionGroup,
+  PaymentOptionRow,
+  PaymentOptionRadio,
+  PaymentOptionInfo,
+  PaymentOptionTitle,
+  PaymentOptionDescription,
+  PaymentOptionControls,
+  PaymentOptionSelect,
 } from "@/components/payment/paymentStyles"
 import UserInfoForm from "@/components/userInfo/UserInfoForm"
 
@@ -30,15 +41,37 @@ export default function PaymentSection() {
     isPaymentFormReady,
     checkout,
     getCartTotalCents,
+    getCheckoutAmountCents,
+    getDownPaymentCents,
     hasService,
+    paymentMode,
+    setPaymentMode,
+    financingCadence,
+    setFinancingCadence,
+    financingTermCount,
+    setFinancingTermCount,
   } = usePayment()
   const [isUserInfoOpen, setIsUserInfoOpen] = useState(true)
   const [showSuccessBanner, setShowSuccessBanner] = useState(false)
   const hasToggledRef = useRef(false)
 
   const totalCents = getCartTotalCents()
+  const checkoutAmountCents = getCheckoutAmountCents()
+  const downPaymentCents = getDownPaymentCents()
   let canCheckout = false
   const requiresPhoneNumber = hasService()
+  const isFinancingSupported = PAYMENT_PROCESSOR === "stripe"
+  const canUseFinancing = isFinancingSupported && downPaymentCents > 0
+  let financingTerms = [6, 12]
+  if (financingCadence === "WEEKLY") {
+    financingTerms = [4, 8, 12]
+  }
+
+  useEffect(() => {
+    if (!canUseFinancing && paymentMode === "financing") {
+      setPaymentMode("full")
+    }
+  }, [canUseFinancing, paymentMode, setPaymentMode])
 
   const getTrimmedValue = (value) => {
     if (typeof value !== "string") {
@@ -130,6 +163,9 @@ export default function PaymentSection() {
   }
 
   let checkoutLabel = `Pay ${formatMoney(totalCents)}`
+  if (paymentMode === "financing") {
+    checkoutLabel = `Pay ${formatMoney(checkoutAmountCents)} down payment`
+  }
   if (isFeesLoading) {
     checkoutLabel = "Calculating fees..."
   }
@@ -145,6 +181,86 @@ export default function PaymentSection() {
       <SectionHeader>
         <h2>Payment</h2>
       </SectionHeader>
+
+      <PaymentOptionCard>
+        <PaymentOptionHeader>
+          <h3>Payment options</h3>
+          <p>Select how you want to pay for this order.</p>
+        </PaymentOptionHeader>
+        <PaymentOptionGroup>
+          <PaymentOptionRow>
+            <PaymentOptionRadio
+              type="radio"
+              name="paymentMode"
+              checked={paymentMode === "full"}
+              onChange={() => setPaymentMode("full")}
+            />
+            <PaymentOptionInfo>
+              <PaymentOptionTitle>Pay in full</PaymentOptionTitle>
+              <PaymentOptionDescription>
+                Pay the full amount today.
+              </PaymentOptionDescription>
+            </PaymentOptionInfo>
+          </PaymentOptionRow>
+          <PaymentOptionRow>
+            <PaymentOptionRadio
+              type="radio"
+              name="paymentMode"
+              checked={paymentMode === "financing"}
+              onChange={() => setPaymentMode("financing")}
+              disabled={!canUseFinancing}
+            />
+            <PaymentOptionInfo>
+              <PaymentOptionTitle>Finance your order</PaymentOptionTitle>
+              <PaymentOptionDescription>
+                Pay a down payment now and the rest over time.
+              </PaymentOptionDescription>
+              {paymentMode === "financing" && (
+                <PaymentOptionControls>
+                  <PaymentOptionSelect
+                    value={financingCadence}
+                    onChange={(event) =>
+                      setFinancingCadence(event.target.value)
+                    }
+                  >
+                    <option value="WEEKLY">Weekly</option>
+                    <option value="MONTHLY">Monthly</option>
+                  </PaymentOptionSelect>
+                  <PaymentOptionSelect
+                    value={String(financingTermCount)}
+                    onChange={(event) =>
+                      setFinancingTermCount(
+                        Number.parseInt(event.target.value, 10)
+                      )
+                    }
+                  >
+                    {financingTerms.map((termCount) => (
+                      <option key={termCount} value={String(termCount)}>
+                        {termCount} payments
+                      </option>
+                    ))}
+                  </PaymentOptionSelect>
+                </PaymentOptionControls>
+              )}
+              {paymentMode === "financing" && (
+                <PaymentOptionDescription>
+                  Down payment today: {formatMoney(downPaymentCents)}
+                </PaymentOptionDescription>
+              )}
+              {!isFinancingSupported && (
+                <PaymentOptionDescription>
+                  Financing is only available with Stripe payments.
+                </PaymentOptionDescription>
+              )}
+              {isFinancingSupported && downPaymentCents <= 0 && (
+                <PaymentOptionDescription>
+                  Financing is unavailable for this total.
+                </PaymentOptionDescription>
+              )}
+            </PaymentOptionInfo>
+          </PaymentOptionRow>
+        </PaymentOptionGroup>
+      </PaymentOptionCard>
 
       <UserInfoCard>
         <UserInfoHeaderButton type="button" onClick={handleToggleUserInfo}>

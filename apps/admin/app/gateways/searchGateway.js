@@ -4,10 +4,10 @@ import { API_URL } from "@/constants.js"
  * Search users and orders
  * @param {string} query - Search query
  * @param {object} options
- * @param {string} [options.type='all'] - Type of search: 'all', 'users', 'orders', 'refunds'
+ * @param {string} [options.type='all'] - Type of search: 'all', 'users', 'orders', 'refunds', 'financing'
  * @param {number} [options.limit=5] - Number of results per type
  * @param {number} [options.offset=0] - Offset for pagination
- * @returns {Promise<{ users?: { users: Array, total: number, hasMore: boolean }, orders?: { orders: Array, total: number, hasMore: boolean }, refunds?: { refunds: Array, total: number, hasMore: boolean } }>}
+ * @returns {Promise<{ users?: { users: Array, total: number, hasMore: boolean }, orders?: { orders: Array, total: number, hasMore: boolean }, refunds?: { refunds: Array, total: number, hasMore: boolean }, financing?: { plans: Array, total: number, hasMore: boolean } }>}
  */
 export const search = async (
   query,

@@ -6,17 +6,23 @@ import prisma from "../../../../../packages/shared/src/db/client.js"
  * @param {number} [params.limit=25]
  * @param {number} [params.offset=0]
  * @param {boolean} [params.unreadOnly=false]
+ * @param {string|undefined} [params.userId]
  * @returns {Promise<{ submissions: Array<object>, total: number, hasMore: boolean }>}
  */
 export const listContactSubmissions = async ({
   limit = 25,
   offset = 0,
   unreadOnly = false,
+  userId,
 } = {}) => {
   const whereClause = {}
 
   if (unreadOnly) {
     whereClause.readAt = null
+  }
+
+  if (typeof userId === "string" && userId.trim()) {
+    whereClause.userId = userId.trim()
   }
 
   const [submissions, total] = await Promise.all([

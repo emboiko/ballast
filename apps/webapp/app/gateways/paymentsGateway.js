@@ -59,3 +59,25 @@ export const confirmStripePayment = async (paymentIntentId, cartItems) => {
   const { orderId, status } = await response.json()
   return { success: true, orderId, status }
 }
+
+/**
+ * Cancel a Stripe payment intent
+ * @param {string} paymentIntentId
+ * @returns {Promise<{ status: string }>}
+ */
+export const cancelStripeIntent = async (paymentIntentId) => {
+  const response = await fetch(`${API_URL}/payments/stripe/cancel-intent`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ paymentIntentId }),
+  })
+
+  const data = await response.json().catch(() => ({}))
+
+  if (!response.ok) {
+    throw new Error(data.error || "Failed to cancel payment intent")
+  }
+
+  return data
+}

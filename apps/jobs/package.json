@@ -6,9 +6,11 @@
   "scripts": {
     "runChargeFinancing": "node scripts/financing/runChargeFinancing.js",
     "runChargeSubscriptions": "node scripts/subscriptions/runChargeSubscriptions.js",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "node --test"
   },
   "dependencies": {
-    "@ballast/shared": "workspace:*"
+    "@ballast/shared": "workspace:*",
+    "stripe": "^20.1.2"
   }
 }

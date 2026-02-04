@@ -6,12 +6,14 @@ import { API_URL } from "@/constants.js"
  * @param {number} [params.limit=25]
  * @param {number} [params.offset=0]
  * @param {boolean|undefined} [params.unreadOnly]
+ * @param {string|undefined} [params.userId]
  * @returns {Promise<{ submissions: Array<object>, total: number, hasMore: boolean }>}
  */
 export const listContactSubmissions = async ({
   limit = 25,
   offset = 0,
   unreadOnly,
+  userId,
 } = {}) => {
   const params = new URLSearchParams({
     limit: String(limit),
@@ -20,6 +22,9 @@ export const listContactSubmissions = async ({
 
   if (unreadOnly === true) {
     params.set("unread", "true")
+  }
+  if (typeof userId === "string" && userId.trim()) {
+    params.set("userId", userId.trim())
   }
 
   const response = await fetch(

@@ -10,6 +10,7 @@ import { OrdersProvider } from "@/contexts/OrdersContext"
 import { CatalogProvider } from "@/contexts/CatalogContext"
 import { ToastProvider } from "@/contexts/ToastContext"
 import { EventsProvider } from "@/contexts/EventsContext"
+import { JobsProvider } from "@/contexts/JobsContext"
 import ToastViewport from "@/components/ui/ToastViewport"
 
 export default function ClientProviders({ children }) {
@@ -23,10 +24,12 @@ export default function ClientProviders({ children }) {
                 <OrdersProvider>
                   <CatalogProvider>
                     <EventsProvider>
-                      <ToastProvider>
-                        <ToastViewport />
-                        {children}
-                      </ToastProvider>
+                      <JobsProvider>
+                        <ToastProvider>
+                          <ToastViewport />
+                          {children}
+                        </ToastProvider>
+                      </JobsProvider>
                     </EventsProvider>
                   </CatalogProvider>
                 </OrdersProvider>

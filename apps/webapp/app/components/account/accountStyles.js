@@ -1,4 +1,5 @@
 import styled from "styled-components"
+import { ErrorText } from "@/components/ui/uiStyles"
 
 export const AccountLayout = styled.div`
   display: grid;
@@ -606,4 +607,196 @@ export const OrderItemPrice = styled.span`
 
 export const OrderItemQuantity = styled.span`
   color: var(--text-secondary);
+`
+export const FinancingList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`
+
+export const FinancingCard = styled.li`
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`
+
+export const FinancingHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+`
+
+export const FinancingTitle = styled.span`
+  font-weight: 600;
+  color: var(--text-primary);
+`
+
+export const FinancingStatus = styled.span`
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  background-color: ${(props) => {
+    if (props.$status === "ACTIVE") {
+      return "var(--status-success-bg-strong)"
+    }
+    if (props.$status === "PAID_OFF") {
+      return "var(--status-success-bg)"
+    }
+    if (props.$status === "PAUSED") {
+      return "var(--status-warning-bg)"
+    }
+    if (props.$status === "DEFAULTED") {
+      return "var(--status-error-bg-strong)"
+    }
+    if (props.$status === "CANCELED") {
+      return "var(--status-error-bg)"
+    }
+    return "var(--bg-secondary)"
+  }};
+  color: ${(props) => {
+    if (props.$status === "ACTIVE") {
+      return "var(--button-primary-bg)"
+    }
+    if (props.$status === "PAID_OFF") {
+      return "var(--button-primary-bg)"
+    }
+    if (props.$status === "PAUSED") {
+      return "var(--button-warning-bg)"
+    }
+    if (props.$status === "DEFAULTED") {
+      return "var(--button-danger-bg)"
+    }
+    if (props.$status === "CANCELED") {
+      return "var(--button-danger-bg)"
+    }
+    return "var(--text-primary)"
+  }};
+`
+
+export const FinancingRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+`
+
+export const FinancingValue = styled.span`
+  font-weight: 600;
+  color: var(--text-primary);
+`
+
+export const FinancingDetailCard = styled.div`
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`
+
+export const FinancingDetailRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--text-secondary);
+`
+
+export const FinancingDetailLabel = styled.span`
+  font-weight: 500;
+  color: var(--text-secondary);
+`
+
+export const FinancingDetailValue = styled.span`
+  font-weight: 600;
+  color: var(--text-primary);
+`
+
+export const FinancingForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`
+
+export const FinancingField = styled.label`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 600;
+  color: var(--text-primary);
+`
+
+export const FinancingInput = styled.input`
+  width: 100%;
+  padding: 0.5rem 0.75rem 0.5rem 2rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+`
+
+export const FinancingInputWrapper = styled.div`
+  position: relative;
+  flex: 1;
+`
+
+export const FinancingInputPrefix = styled.span`
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-weight: 600;
+  pointer-events: none;
+`
+
+export const FinancingMessageSlot = styled.div`
+  min-height: 1.25rem;
+  display: flex;
+  align-items: center;
+`
+
+export const FinancingErrorText = styled(ErrorText)`
+  margin: 0;
+`
+
+export const FinancingSuccessText = styled.p`
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--button-primary-bg);
+`
+
+export const FinancingButtonRow = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+`
+
+export const ContractContainer = styled.div`
+  padding: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background-color: var(--bg-secondary);
+
+  h1,
+  h2,
+  h3 {
+    margin-top: 0;
+  }
 `

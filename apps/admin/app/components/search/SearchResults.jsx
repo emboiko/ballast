@@ -117,6 +117,49 @@ export function RefundResultItem({ refund, onClick }) {
   )
 }
 
+export function FinancingResultItem({ plan, onClick }) {
+  const formattedTotal = formatMoney(plan.totalAmountCents, plan.currency)
+  const formattedRemaining = formatMoney(
+    plan.remainingBalanceCents,
+    plan.currency
+  )
+  const formattedDate = new Date(plan.createdAt).toLocaleDateString()
+
+  let userEmailLabel = "Unknown user"
+  if (plan.user?.email) {
+    userEmailLabel = plan.user.email
+  }
+
+  const subtitleParts = [
+    userEmailLabel,
+    `Total: ${formattedTotal}`,
+    `Remaining: ${formattedRemaining}`,
+    formattedDate,
+  ]
+
+  let statusLabel = plan.status
+  if (plan.status) {
+    statusLabel = formatStatusLabel(plan.status)
+  }
+
+  return (
+    <SearchResultItem>
+      <SearchResultLink
+        as={Link}
+        href={`/financing/${plan.id}`}
+        onClick={onClick}
+      >
+        <ResultIcon>💳</ResultIcon>
+        <ResultInfo>
+          <ResultTitle>{plan.id}</ResultTitle>
+          <ResultSubtitle>{subtitleParts.join(" • ")}</ResultSubtitle>
+        </ResultInfo>
+        <ResultBadge $status={plan.status}>{statusLabel}</ResultBadge>
+      </SearchResultLink>
+    </SearchResultItem>
+  )
+}
+
 export function UsersSection({ users, total, onResultClick }) {
   if (!users || users.length === 0) {
     return null
@@ -177,6 +220,30 @@ export function RefundsSection({ refunds, total, onResultClick }) {
           <RefundResultItem
             key={refund.id}
             refund={refund}
+            onClick={onResultClick}
+          />
+        ))}
+      </SearchResultsList>
+    </SearchSection>
+  )
+}
+
+export function FinancingSection({ plans, total, onResultClick }) {
+  if (!plans || plans.length === 0) {
+    return null
+  }
+
+  return (
+    <SearchSection>
+      <SearchSectionHeader>
+        Financing
+        <SearchSectionCount>{total} found</SearchSectionCount>
+      </SearchSectionHeader>
+      <SearchResultsList>
+        {plans.map((plan) => (
+          <FinancingResultItem
+            key={plan.id}
+            plan={plan}
             onClick={onResultClick}
           />
         ))}

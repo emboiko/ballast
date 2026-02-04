@@ -42,6 +42,12 @@ export const listOrders = async ({ limit = 25, offset = 0, userId } = {}) => {
             email: true,
           },
         },
+        financingPlan: {
+          select: {
+            id: true,
+            status: true,
+          },
+        },
         _count: {
           select: {
             refunds: true,
@@ -91,6 +97,12 @@ export const getOrderById = async (orderId) => {
           email: true,
           archivedAt: true,
           bannedAt: true,
+        },
+      },
+      financingPlan: {
+        select: {
+          id: true,
+          status: true,
         },
       },
       items: {

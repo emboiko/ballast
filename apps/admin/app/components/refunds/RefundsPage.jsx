@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import PageLayout from "@/components/ui/PageLayout"
 import { useToast } from "@/contexts/ToastContext"
 import { useRefunds } from "@/contexts/RefundsContext"
@@ -28,6 +29,7 @@ import {
 export default function RefundsPage() {
   const toast = useToast()
   const { fetchRefunds } = useRefunds()
+  const searchParams = useSearchParams()
   const [status, setStatus] = useState("pending")
   const [refunds, setRefunds] = useState([])
   const [total, setTotal] = useState(0)
@@ -43,13 +45,45 @@ export default function RefundsPage() {
 
   const hasMore = refunds.length < total
 
+  const normalizedUserId = useMemo(() => {
+    const rawValue = searchParams.get("userId")
+    if (typeof rawValue !== "string") {
+      return null
+    }
+    const trimmed = rawValue.trim()
+    if (trimmed.length === 0) {
+      return null
+    }
+    return trimmed
+  }, [searchParams])
+
   const loadStatusCounts = useCallback(async () => {
     try {
       const [pending, approved, rejected, failed] = await Promise.all([
-        fetchRefunds({ status: "pending", limit: 1, offset: 0 }),
-        fetchRefunds({ status: "approved", limit: 1, offset: 0 }),
-        fetchRefunds({ status: "rejected", limit: 1, offset: 0 }),
-        fetchRefunds({ status: "failed", limit: 1, offset: 0 }),
+        fetchRefunds({
+          status: "pending",
+          limit: 1,
+          offset: 0,
+          userId: normalizedUserId || undefined,
+        }),
+        fetchRefunds({
+          status: "approved",
+          limit: 1,
+          offset: 0,
+          userId: normalizedUserId || undefined,
+        }),
+        fetchRefunds({
+          status: "rejected",
+          limit: 1,
+          offset: 0,
+          userId: normalizedUserId || undefined,
+        }),
+        fetchRefunds({
+          status: "failed",
+          limit: 1,
+          offset: 0,
+          userId: normalizedUserId || undefined,
+        }),
       ])
 
       setStatusCounts({
@@ -61,7 +95,7 @@ export default function RefundsPage() {
     } catch (error) {
       toast.showErrorToast(error.message || "Failed to load refund counts")
     }
-  }, [fetchRefunds, toast])
+  }, [fetchRefunds, normalizedUserId, toast])
 
   const loadFirstPage = useCallback(async () => {
     setIsLoading(true)
@@ -70,6 +104,7 @@ export default function RefundsPage() {
         status,
         limit: REFUNDS_PAGE_SIZE,
         offset: 0,
+        userId: normalizedUserId || undefined,
       })
       setRefunds(data.refunds || [])
       setTotal(data.total || 0)
@@ -86,7 +121,7 @@ export default function RefundsPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [status, toast])
+  }, [status, toast, normalizedUserId])
 
   useEffect(() => {
     loadFirstPage()
@@ -110,6 +145,7 @@ export default function RefundsPage() {
         status,
         limit: REFUNDS_PAGE_SIZE,
         offset,
+        userId: normalizedUserId || undefined,
       })
       const nextRefunds = data.refunds || []
       setRefunds((prev) => [...prev, ...nextRefunds])
@@ -134,6 +170,9 @@ export default function RefundsPage() {
   let subtitleText = "Review and process refund requests"
   if (status) {
     subtitleText = `Showing ${formatStatusLabel(status)} refund requests`
+  }
+  if (normalizedUserId) {
+    subtitleText = `${subtitleText} for user ${normalizedUserId}`
   }
 
   let loadMoreButtonLabel = "Load more"

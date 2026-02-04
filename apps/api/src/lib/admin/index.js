@@ -1,6 +1,11 @@
 export { adminLogin } from "./auth.js"
 
-export { searchUsers, searchOrders, searchRefunds } from "./search.js"
+export {
+  searchUsers,
+  searchOrders,
+  searchRefunds,
+  searchFinancingPlans,
+} from "./search.js"
 
 export {
   getUserById,
@@ -66,3 +71,5 @@ export {
   setContactSubmissionReadStatus,
   deleteContactSubmission,
 } from "./contactSubmissions.js"
+
+export { listJobRuns, getJobRunById } from "./jobs.js"

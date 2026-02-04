@@ -368,6 +368,13 @@ export const StatusBadge = styled.span`
         background-color: var(--status-warning-bg);
       `
     }
+    if (props.$variant === "info") {
+      return `
+        color: var(--text-secondary);
+        border-color: var(--status-info-border);
+        background-color: var(--status-info-bg);
+      `
+    }
     if (props.$variant === "error") {
       return `
         color: var(--status-error-text);

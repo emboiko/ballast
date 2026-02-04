@@ -30,6 +30,7 @@ export function ContactSubmissionsProvider({ children }) {
   const [isLoadingSubmission, setIsLoadingSubmission] = useState(false)
   const [error, setError] = useState(null)
   const [filter, setFilter] = useState("UNREAD")
+  const [userId, setUserId] = useState(null)
   const [lastRefreshedAt, setLastRefreshedAt] = useState(null)
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false)
 
@@ -52,6 +53,7 @@ export function ContactSubmissionsProvider({ children }) {
         limit: COMMUNICATIONS_PAGE_SIZE,
         offset: 0,
         unreadOnly,
+        userId: userId || undefined,
       })
 
       let nextSubmissions = []
@@ -94,7 +96,7 @@ export function ContactSubmissionsProvider({ children }) {
     } finally {
       setIsLoadingList(false)
     }
-  }, [filter, hasLoadedOnce])
+  }, [filter, hasLoadedOnce, userId])
 
   const loadMoreSubmissions = useCallback(async () => {
     if (isLoadingMore) {
@@ -119,6 +121,7 @@ export function ContactSubmissionsProvider({ children }) {
         limit: COMMUNICATIONS_PAGE_SIZE,
         offset,
         unreadOnly,
+        userId: userId || undefined,
       })
 
       let newSubmissions = []
@@ -149,7 +152,7 @@ export function ContactSubmissionsProvider({ children }) {
     } finally {
       setIsLoadingMore(false)
     }
-  }, [filter, hasMore, isLoadingMore, submissions.length])
+  }, [filter, hasMore, isLoadingMore, submissions.length, userId])
 
   const loadSubmissionById = useCallback(async (submissionId) => {
     try {
@@ -261,6 +264,17 @@ export function ContactSubmissionsProvider({ children }) {
     setLastRefreshedAt(null)
   }, [])
 
+  const setUserIdValue = useCallback((nextUserId) => {
+    setUserId(nextUserId)
+    setSelectedSubmissionId(null)
+    setSelectedSubmission(null)
+    setSubmissions([])
+    setTotal(0)
+    setHasMore(false)
+    setHasLoadedOnce(false)
+    setLastRefreshedAt(null)
+  }, [])
+
   const deleteSubmissionById = useCallback(
     async (submissionId) => {
       await deleteContactSubmissionByIdGateway(submissionId)
@@ -313,6 +327,8 @@ export function ContactSubmissionsProvider({ children }) {
       setFilterValue,
       setSubmissionReadStatus,
       deleteSubmissionById,
+      userId,
+      setUserId: setUserIdValue,
     }
   }, [
     deleteSubmissionById,
@@ -331,8 +347,10 @@ export function ContactSubmissionsProvider({ children }) {
     selectedSubmissionId,
     setFilterValue,
     setSubmissionReadStatus,
+    setUserIdValue,
     submissions,
     total,
+    userId,
   ])
 
   return (

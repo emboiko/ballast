@@ -1,6 +1,10 @@
 import { Router } from "express"
 import { requireAuth, requireVerified } from "../middleware/auth.js"
-import { createStripeIntent, confirmStripePayment } from "../lib/stripe.js"
+import {
+  createStripeIntent,
+  confirmStripePayment,
+  cancelStripeIntent,
+} from "../lib/stripe.js"
 
 const router = Router()
 
@@ -59,6 +63,28 @@ router.post(
     } catch (error) {
       console.error("Confirm payment error:", error)
       res.status(500).json({ error: "Failed to confirm payment" })
+    }
+  }
+)
+
+// POST /payments/stripe/cancel-intent
+// Cancels a payment intent when switching payment modes
+router.post(
+  "/cancel-intent",
+  requireAuth,
+  requireVerified,
+  async (req, res) => {
+    try {
+      const result = await cancelStripeIntent(req.body.paymentIntentId)
+
+      if (!result.success) {
+        return res.status(400).json({ error: result.error })
+      }
+
+      res.json({ status: result.status })
+    } catch (error) {
+      console.error("Cancel payment intent error:", error)
+      res.status(500).json({ error: "Failed to cancel payment intent" })
     }
   }
 )

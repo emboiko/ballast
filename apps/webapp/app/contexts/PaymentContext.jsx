@@ -12,14 +12,18 @@ import { useRouter } from "next/navigation"
 import {
   createStripeIntent as createStripeIntentGateway,
   confirmStripePayment as confirmStripePaymentGateway,
+  cancelStripeIntent as cancelStripeIntentGateway,
 } from "@/gateways/paymentsGateway"
+import { createFinancingPlan as createFinancingPlanGateway } from "@/gateways/financingGateway"
 import { fetchCartFees as fetchCartFeesGateway } from "@/gateways/feesGateway"
 import { loadCartFromStorage, saveCartToStorage } from "@/utils/cart"
+import { percentOfMoney } from "@ballast/shared/src/money.js"
 
 const PaymentContext = createContext(undefined)
 
 export function PaymentProvider({ children }) {
   const router = useRouter()
+  const DOWN_PAYMENT_PERCENT = 20
   const [cart, setCart] = useState([])
   const [fees, setFees] = useState([])
   const [isFeesLoading, setIsFeesLoading] = useState(false)
@@ -27,6 +31,9 @@ export function PaymentProvider({ children }) {
   const [hasLoadedFees, setHasLoadedFees] = useState(false)
   const [isPaymentFormReady, setIsPaymentFormReady] = useState(false)
   const [paymentProvider, setPaymentProvider] = useState("stripe")
+  const [paymentMode, setPaymentMode] = useState("full")
+  const [financingCadence, setFinancingCadence] = useState("MONTHLY")
+  const [financingTermCount, setFinancingTermCount] = useState(6)
   const [isCheckingOut, setIsCheckingOut] = useState(false)
   const [checkoutResult, setCheckoutResult] = useState(null)
 
@@ -166,6 +173,21 @@ export function PaymentProvider({ children }) {
     return getCartSubtotalCents() + getFeesTotalCents()
   }, [getCartSubtotalCents, getFeesTotalCents])
 
+  const getDownPaymentCents = useCallback(() => {
+    const totalCents = getCartTotalCents()
+    if (totalCents <= 0) {
+      return 0
+    }
+    return percentOfMoney(totalCents, DOWN_PAYMENT_PERCENT)
+  }, [getCartTotalCents, DOWN_PAYMENT_PERCENT])
+
+  const getCheckoutAmountCents = useCallback(() => {
+    if (paymentMode === "financing") {
+      return getDownPaymentCents()
+    }
+    return getCartTotalCents()
+  }, [getCartTotalCents, getDownPaymentCents, paymentMode])
+
   const requestCartFees = useCallback(
     async (cartItemsOverride = null) => {
       let cartItems = cart
@@ -231,6 +253,7 @@ export function PaymentProvider({ children }) {
   // Main checkout function - delegates to the registered processor handler
   const checkout = useCallback(async () => {
     const totalCents = getCartTotalCents()
+    const checkoutAmountCents = getCheckoutAmountCents()
 
     if (totalCents <= 0) {
       setCheckoutResult({ success: false, error: "Cart is empty" })
@@ -246,9 +269,46 @@ export function PaymentProvider({ children }) {
     setCheckoutResult(null)
 
     try {
-      const result = await checkoutHandlerRef.current(totalCents)
+      const result = await checkoutHandlerRef.current(checkoutAmountCents)
 
-      if (result.success) {
+      if (result.success && paymentMode === "financing") {
+        if (!result.paymentIntentId) {
+          setCheckoutResult({
+            success: false,
+            error: "Payment method confirmation failed",
+          })
+          return
+        }
+
+        const financingResult = await createFinancingPlanGateway({
+          paymentIntentId: result.paymentIntentId,
+          cartItems: cart,
+          fees,
+          cadence: financingCadence,
+          termCount: financingTermCount,
+        })
+
+        if (!financingResult.success) {
+          setCheckoutResult({
+            success: false,
+            error: financingResult.error || "Failed to create financing plan",
+          })
+          return
+        }
+
+        setCart([])
+        setFees([])
+        setFeesError(null)
+        setHasLoadedFees(true)
+        lastFeesSignatureRef.current = null
+        setCheckoutResult({
+          success: true,
+          orderId: financingResult.orderId,
+          planId: financingResult.planId,
+          message: "Financing plan created successfully!",
+        })
+        router.push(`/account/financing/${financingResult.planId}`)
+      } else if (result.success) {
         setCart([])
         setFees([])
         setFeesError(null)
@@ -275,7 +335,16 @@ export function PaymentProvider({ children }) {
     } finally {
       setIsCheckingOut(false)
     }
-  }, [getCartTotalCents, router])
+  }, [
+    cart,
+    fees,
+    financingCadence,
+    financingTermCount,
+    getCartTotalCents,
+    getCheckoutAmountCents,
+    paymentMode,
+    router,
+  ])
 
   // Clear the checkout result
   const clearCheckoutResult = useCallback(() => {
@@ -312,6 +381,19 @@ export function PaymentProvider({ children }) {
     []
   )
 
+  const cancelStripeIntent = useCallback(async (paymentIntentId) => {
+    if (!paymentIntentId) {
+      return { success: false, error: "Payment intent ID is required" }
+    }
+    try {
+      await cancelStripeIntentGateway(paymentIntentId)
+      return { success: true }
+    } catch (err) {
+      console.error("Cancel intent error:", err)
+      return { success: false, error: err.message || "Failed to cancel intent" }
+    }
+  }, [])
+
   const value = {
     cart,
     fees,
@@ -320,6 +402,9 @@ export function PaymentProvider({ children }) {
     hasLoadedFees,
     isPaymentFormReady,
     paymentProvider,
+    paymentMode,
+    financingCadence,
+    financingTermCount,
     isCheckingOut,
     checkoutResult,
     addToCart,
@@ -331,13 +416,19 @@ export function PaymentProvider({ children }) {
     getCartSubtotalCents,
     getFeesTotalCents,
     getCartTotalCents,
+    getDownPaymentCents,
+    getCheckoutAmountCents,
     requestCartFees,
     checkout,
     clearCheckoutResult,
     setPaymentProvider,
+    setPaymentMode,
+    setFinancingCadence,
+    setFinancingTermCount,
     registerCheckoutHandler,
     createStripeIntent,
     confirmStripePayment,
+    cancelStripeIntent,
   }
 
   return (

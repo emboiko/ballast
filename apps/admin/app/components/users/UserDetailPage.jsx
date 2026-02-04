@@ -362,6 +362,41 @@ export default function UserDetailPage() {
     )
   }
 
+  let financingPlansContent = <DetailValue>{user.financingPlanCount}</DetailValue>
+  if (user?.id) {
+    financingPlansContent = (
+      <DetailValue>
+        <InlineLink href={`/financing?userId=${user.id}`}>
+          {user.financingPlanCount}
+        </InlineLink>
+      </DetailValue>
+    )
+  }
+
+  let contactSubmissionsContent = (
+    <DetailValue>{user.contactSubmissionCount}</DetailValue>
+  )
+  if (user?.id) {
+    contactSubmissionsContent = (
+      <DetailValue>
+        <InlineLink href={`/communications/contact?userId=${user.id}`}>
+          {user.contactSubmissionCount}
+        </InlineLink>
+      </DetailValue>
+    )
+  }
+
+  let totalRefundsContent = <DetailValue>{totalRefundsLabel}</DetailValue>
+  if (user?.id) {
+    totalRefundsContent = (
+      <DetailValue>
+        <InlineLink href={`/refunds?userId=${user.id}`}>
+          {totalRefundsLabel}
+        </InlineLink>
+      </DetailValue>
+    )
+  }
+
   const renderBanModalContent = () => {
     if (isBanned) {
       return (
@@ -501,12 +536,16 @@ export default function UserDetailPage() {
               {totalOrdersContent}
             </DetailItem>
             <DetailItem>
+              <DetailLabel>Financing Plans</DetailLabel>
+              {financingPlansContent}
+            </DetailItem>
+            <DetailItem>
               <DetailLabel>Contact Submissions</DetailLabel>
-              <DetailValue>{user.contactSubmissionCount}</DetailValue>
+              {contactSubmissionsContent}
             </DetailItem>
             <DetailItem>
               <DetailLabel>Total Refunds</DetailLabel>
-              <DetailValue>{totalRefundsLabel}</DetailValue>
+              {totalRefundsContent}
             </DetailItem>
           </DetailGrid>
         </DetailSection>

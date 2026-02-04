@@ -107,6 +107,11 @@ export default function OrderDetailPage() {
     refundStatusLabel = formatStatusLabel(order.refundStatus)
   }
 
+  let financingStatusLabel = null
+  if (order.financingPlan?.status) {
+    financingStatusLabel = `${formatStatusLabel(order.financingPlan.status)}`
+  }
+
   let userBadgesLabel = "—"
   const userBadges = []
   if (user?.bannedAt) {
@@ -218,6 +223,11 @@ export default function OrderDetailPage() {
                 <StatusBadge $variant={orderStatusVariant}>
                   {orderStatusLabel}
                 </StatusBadge>
+                {financingStatusLabel && (
+                  <StatusBadge $variant="info">
+                    {financingStatusLabel}
+                  </StatusBadge>
+                )}
                 {order.refundStatus && (
                   <StatusBadge $variant="warning">
                     Refunds {refundStatusLabel}

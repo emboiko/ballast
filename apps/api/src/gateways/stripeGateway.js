@@ -85,6 +85,42 @@ export const createPaymentIntent = async (
 }
 
 /**
+ * Cancel a payment intent.
+ * @param {string} paymentIntentId - Stripe payment intent ID
+ * @returns {Promise<{ id: string, status: string }>}
+ */
+export const cancelPaymentIntent = async (paymentIntentId) => {
+  try {
+    const existingIntent = await getStripe().paymentIntents.retrieve(
+      paymentIntentId
+    )
+    const cancelableStatuses = new Set([
+      "requires_payment_method",
+      "requires_capture",
+      "requires_reauthorization",
+      "requires_confirmation",
+      "requires_action",
+      "processing",
+    ])
+
+    if (!cancelableStatuses.has(existingIntent.status)) {
+      return { id: existingIntent.id, status: existingIntent.status }
+    }
+
+    const paymentIntent = await getStripe().paymentIntents.cancel(
+      paymentIntentId
+    )
+    return { id: paymentIntent.id, status: paymentIntent.status }
+  } catch (error) {
+    console.error("Stripe payment intent cancel failed:", error)
+    if (error instanceof Stripe.errors.StripeError) {
+      throw new Error(`Cancel failed: ${error.message}`)
+    }
+    throw new Error("Failed to cancel payment intent")
+  }
+}
+
+/**
  * Confirm a payment intent and create an order record.
  * Called after client-side confirmation succeeds.
  * @param {string} userId
@@ -188,6 +224,64 @@ export const getPaymentMethodDetails = async (paymentIntentId) => {
   } catch (error) {
     console.error("Failed to retrieve payment method details:", error)
     return null
+  }
+}
+
+/**
+ * Retrieve a payment intent with payment method details.
+ * @param {string} paymentIntentId
+ * @returns {Promise<{ paymentIntent: object, paymentMethodId: string | null, paymentMethodDetails: object | null }>}
+ */
+export const getPaymentIntentSummary = async (paymentIntentId) => {
+  try {
+    const paymentIntent = await getStripe().paymentIntents.retrieve(
+      paymentIntentId,
+      {
+        expand: ["payment_method"],
+      }
+    )
+
+    let paymentMethodId = null
+    let paymentMethodDetails = null
+
+    if (paymentIntent.payment_method) {
+      if (typeof paymentIntent.payment_method === "string") {
+        paymentMethodId = paymentIntent.payment_method
+        const paymentMethod = await getStripe().paymentMethods.retrieve(
+          paymentMethodId
+        )
+
+        if (paymentMethod.type === "card" && paymentMethod.card) {
+          paymentMethodDetails = {
+            brand: paymentMethod.card.brand,
+            last4: paymentMethod.card.last4,
+            expMonth: paymentMethod.card.exp_month,
+            expYear: paymentMethod.card.exp_year,
+          }
+        }
+      } else {
+        const paymentMethod = paymentIntent.payment_method
+        paymentMethodId = paymentMethod.id
+
+        if (paymentMethod.type === "card" && paymentMethod.card) {
+          paymentMethodDetails = {
+            brand: paymentMethod.card.brand,
+            last4: paymentMethod.card.last4,
+            expMonth: paymentMethod.card.exp_month,
+            expYear: paymentMethod.card.exp_year,
+          }
+        }
+      }
+    }
+
+    return {
+      paymentIntent,
+      paymentMethodId,
+      paymentMethodDetails,
+    }
+  } catch (error) {
+    console.error("Failed to retrieve payment intent summary:", error)
+    throw new Error("Failed to retrieve payment intent")
   }
 }
 

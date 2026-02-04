@@ -189,3 +189,75 @@ export const searchRefunds = async (query, { limit = 5, offset = 0 } = {}) => {
     hasMore: offset + refunds.length < total,
   }
 }
+
+/**
+ * Search financing plans by ID or user email (partial match)
+ * @param {string} query
+ * @param {object} options
+ * @param {number} [options.limit=5]
+ * @param {number} [options.offset=0]
+ * @returns {Promise<{ plans: Array<object>, total: number, hasMore: boolean }>}
+ */
+export const searchFinancingPlans = async (
+  query,
+  { limit = 5, offset = 0 } = {}
+) => {
+  if (!query || query.trim().length === 0) {
+    return { plans: [], total: 0, hasMore: false }
+  }
+
+  const searchTerm = query.trim()
+
+  const whereClause = {
+    OR: [
+      {
+        id: {
+          contains: searchTerm,
+          mode: "insensitive",
+        },
+      },
+      {
+        user: {
+          email: {
+            contains: searchTerm,
+            mode: "insensitive",
+          },
+        },
+      },
+    ],
+  }
+
+  const [plans, total] = await Promise.all([
+    prisma.financingPlan.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        status: true,
+        currency: true,
+        totalAmountCents: true,
+        remainingBalanceCents: true,
+        cadence: true,
+        nextPaymentDate: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+      skip: offset,
+    }),
+    prisma.financingPlan.count({
+      where: whereClause,
+    }),
+  ])
+
+  return {
+    plans,
+    total,
+    hasMore: offset + plans.length < total,
+  }
+}

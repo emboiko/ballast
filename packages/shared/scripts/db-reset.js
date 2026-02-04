@@ -12,43 +12,43 @@ import { PrismaClient } from "@prisma/client"
 const prisma = new PrismaClient()
 
 const reset = async () => {
-  console.log("🗑️  Resetting database...")
+  console.info("🗑️  Resetting database...")
 
   // Delete in order to respect foreign key constraints
   await prisma.catalogImage.deleteMany()
-  console.log("   ✓ Cleared catalog images")
+  console.info("   ✓ Cleared catalog images")
 
   await prisma.orderItem.deleteMany()
-  console.log("   ✓ Cleared order items")
+  console.info("   ✓ Cleared order items")
 
   await prisma.refund.deleteMany()
-  console.log("   ✓ Cleared refunds")
+  console.info("   ✓ Cleared refunds")
 
   await prisma.order.deleteMany()
-  console.log("   ✓ Cleared orders")
+  console.info("   ✓ Cleared orders")
 
   await prisma.contactSubmission.deleteMany()
-  console.log("   ✓ Cleared contact submissions")
+  console.info("   ✓ Cleared contact submissions")
 
   await prisma.communicationEmail.deleteMany()
-  console.log("   ✓ Cleared communication emails")
+  console.info("   ✓ Cleared communication emails")
 
   await prisma.verificationToken.deleteMany()
-  console.log("   ✓ Cleared verification tokens")
+  console.info("   ✓ Cleared verification tokens")
 
   await prisma.user.deleteMany()
-  console.log("   ✓ Cleared users")
+  console.info("   ✓ Cleared users")
 
   await prisma.product.deleteMany()
-  console.log("   ✓ Cleared products")
+  console.info("   ✓ Cleared products")
 
   await prisma.service.deleteMany()
-  console.log("   ✓ Cleared services")
+  console.info("   ✓ Cleared services")
 
   await prisma.historyEvent.deleteMany()
-  console.log("   ✓ Cleared history events")
+  console.info("   ✓ Cleared history events")
 
-  console.log("✅ Database reset complete!")
+  console.info("✅ Database reset complete!")
 }
 
 reset()

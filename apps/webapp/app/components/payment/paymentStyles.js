@@ -441,6 +441,85 @@ export const UserInfoCard = styled(PaymentCard)`
   margin-bottom: 1rem;
 `
 
+export const PaymentOptionCard = styled(PaymentCard)`
+  margin-bottom: 1rem;
+`
+
+export const PaymentOptionHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+`
+
+export const PaymentOptionGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`
+
+export const PaymentOptionRow = styled.label`
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: var(--bg-secondary);
+  transition: border-color 0.2s, background-color 0.2s;
+
+  &:hover {
+    border-color: var(--text-secondary);
+  }
+`
+
+export const PaymentOptionRadio = styled.input`
+  margin-top: 0.2rem;
+`
+
+export const PaymentOptionInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`
+
+export const PaymentOptionTitle = styled.span`
+  font-weight: 600;
+  color: var(--text-primary);
+`
+
+export const PaymentOptionDescription = styled.span`
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+`
+
+export const PaymentOptionControls = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+`
+
+export const PaymentOptionSelect = styled.select`
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+`
+
 export const UserInfoHeaderButton = styled.button`
   width: 100%;
   display: flex;

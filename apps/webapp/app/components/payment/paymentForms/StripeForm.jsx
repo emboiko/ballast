@@ -15,7 +15,6 @@ import { usePayment } from "@/contexts/PaymentContext"
 import { ErrorText, TextCentered } from "@/components/ui/uiStyles"
 import { PaymentCard } from "@/components/payment/paymentStyles"
 
-// Helper to get CSS variable value as hex color
 const getCSSVariable = (variableName) => {
   if (typeof window === "undefined") {
     return null
@@ -26,7 +25,6 @@ const getCSSVariable = (variableName) => {
   return value || null
 }
 
-// Convert CSS variable (rgb/rgba/hex) to hex format for Stripe
 const cssVarToHex = (variableName) => {
   const value = getCSSVariable(variableName)
   if (!value) {
@@ -56,7 +54,12 @@ const cssVarToHex = (variableName) => {
 function StripeCheckoutForm({ onPaymentSuccess, paymentIntentId }) {
   const stripe = useStripe()
   const elements = useElements()
-  const { registerCheckoutHandler, cart, confirmStripePayment } = usePayment()
+  const {
+    registerCheckoutHandler,
+    cart,
+    confirmStripePayment,
+    paymentMode,
+  } = usePayment()
 
   // Register the checkout handler with PaymentContext
   useEffect(() => {
@@ -131,6 +134,10 @@ function StripeCheckoutForm({ onPaymentSuccess, paymentIntentId }) {
           }
         }
 
+        if (paymentMode === "financing") {
+          return { success: true, paymentIntentId: paymentIntent.id }
+        }
+
         // Record the order
         const result = await confirmStripePayment(paymentIntent.id, cart)
 
@@ -166,6 +173,7 @@ function StripeCheckoutForm({ onPaymentSuccess, paymentIntentId }) {
     paymentIntentId,
     cart,
     confirmStripePayment,
+    paymentMode,
   ])
 
   return (
@@ -182,21 +190,24 @@ function StripeCheckoutForm({ onPaymentSuccess, paymentIntentId }) {
 export default function StripeForm() {
   const { theme } = useTheme()
   const {
-    getCartTotalCents,
+    getCheckoutAmountCents,
     createStripeIntent,
     checkoutResult,
     isFeesLoading,
     feesError,
     hasLoadedFees,
+    cancelStripeIntent,
   } = usePayment()
   const pathname = usePathname()
   const [clientSecret, setClientSecret] = useState("")
   const [paymentIntentId, setPaymentIntentId] = useState("")
   const [error, setError] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
+  const checkoutAmountCents = getCheckoutAmountCents()
 
   // Ref to prevent double intent creation from StrictMode
   const isCreatingRef = useRef(false)
+  const lastAmountRef = useRef(null)
 
   const stripeKey = STRIPE_PUBLISHABLE_KEY
   const isOnCheckoutPage = pathname === "/checkout"
@@ -239,7 +250,6 @@ export default function StripeForm() {
       return
     }
 
-    // Don't create intent during successful checkout (cart is being cleared)
     if (checkoutResult?.success) {
       return
     }
@@ -259,15 +269,14 @@ export default function StripeForm() {
       setError(null)
 
       try {
-        const totalCents = getCartTotalCents()
-        if (totalCents <= 0) {
+        if (checkoutAmountCents <= 0) {
           setError("Cart is empty")
           setIsLoading(false)
           isCreatingRef.current = false
           return
         }
 
-        const result = await createStripeIntent(totalCents)
+        const result = await createStripeIntent(checkoutAmountCents)
         if (!result.success) {
           throw new Error(result.error || "Failed to initialize payment")
         }
@@ -286,11 +295,45 @@ export default function StripeForm() {
     isOnCheckoutPage,
     stripeKey,
     clientSecret,
-    getCartTotalCents,
+    checkoutAmountCents,
+    createStripeIntent,
     checkoutResult,
     isFeesLoading,
     feesError,
     hasLoadedFees,
+  ])
+
+  useEffect(() => {
+    if (!isOnCheckoutPage) {
+      return
+    }
+
+    if (checkoutResult?.success) {
+      return
+    }
+
+    if (lastAmountRef.current === null) {
+      lastAmountRef.current = checkoutAmountCents
+      return
+    }
+
+    if (lastAmountRef.current !== checkoutAmountCents) {
+      const stalePaymentIntentId = paymentIntentId
+      lastAmountRef.current = checkoutAmountCents
+      setClientSecret("")
+      setPaymentIntentId("")
+      setError(null)
+      isCreatingRef.current = false
+      if (stalePaymentIntentId) {
+        cancelStripeIntent(stalePaymentIntentId).catch(() => {})
+      }
+    }
+  }, [
+    checkoutAmountCents,
+    isOnCheckoutPage,
+    paymentIntentId,
+    cancelStripeIntent,
+    checkoutResult,
   ])
 
   // Reset when leaving checkout page
@@ -309,7 +352,6 @@ export default function StripeForm() {
     }
   }, [feesError])
 
-  // Handle successful payment - reset for next payment
   const handlePaymentSuccess = useCallback(() => {
     setClientSecret("")
     setPaymentIntentId("")
@@ -320,7 +362,6 @@ export default function StripeForm() {
     return null
   }
 
-  // Don't render during successful checkout (prevents error flash before redirect)
   if (checkoutResult?.success) {
     return null
   }

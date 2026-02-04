@@ -1,6 +1,3 @@
-# Placeholder Dockerfile for AWS Batch job server
-# TODO: Configure proper build and runtime setup
-
 FROM node:20
 
 WORKDIR /app
@@ -11,7 +8,7 @@ COPY apps/jobs ./apps/jobs
 COPY packages/shared ./packages/shared
 
 # Enable pnpm and install dependencies
-RUN corepack enable && pnpm install --frozen-lockfile
+RUN corepack enable && pnpm install --frozen-lockfile && pnpm --filter @ballast/shared db:generate
 
 WORKDIR /app/apps/jobs
 

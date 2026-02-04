@@ -2,6 +2,7 @@ import {
   getOrCreateCustomer,
   createPaymentIntent,
   confirmPaymentIntent,
+  cancelPaymentIntent,
 } from "../gateways/stripeGateway.js"
 import prisma from "../../../../packages/shared/src/db/client.js"
 import { formatMoney } from "../../../../packages/shared/src/money.js"
@@ -148,6 +149,31 @@ export const confirmStripePayment = async (
     return {
       success: false,
       error: error.message || "Failed to confirm payment",
+    }
+  }
+}
+
+/**
+ * Cancel a Stripe payment intent
+ * @param {string} paymentIntentId
+ * @returns {Promise<{ success: boolean, status?: string, error?: string }>}
+ */
+export const cancelStripeIntent = async (paymentIntentId) => {
+  if (!paymentIntentId || typeof paymentIntentId !== "string") {
+    return {
+      success: false,
+      error: "Payment intent ID is required",
+    }
+  }
+
+  try {
+    const result = await cancelPaymentIntent(paymentIntentId)
+    return { success: true, status: result.status }
+  } catch (error) {
+    console.error("Cancel payment intent error:", error)
+    return {
+      success: false,
+      error: error.message || "Failed to cancel payment intent",
     }
   }
 }

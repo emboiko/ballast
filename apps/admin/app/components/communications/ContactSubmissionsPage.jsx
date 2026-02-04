@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
+import { useSearchParams } from "next/navigation"
 import PageLayout from "@/components/ui/PageLayout"
 import SectionNav from "@/components/ui/SectionNav"
 import { useContactSubmissions } from "@/contexts/ContactSubmissionsContext"
@@ -35,6 +36,7 @@ import {
 } from "@/components/communications/communicationsStyles"
 
 export default function ContactSubmissionsPage() {
+  const searchParams = useSearchParams()
   const {
     submissions,
     total,
@@ -53,12 +55,29 @@ export default function ContactSubmissionsPage() {
     setFilterValue,
     setSubmissionReadStatus,
     deleteSubmissionById,
+    setUserId,
   } = useContactSubmissions()
 
   const { showErrorToast, showSuccessToast } = useToast()
 
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+
+  const normalizedUserId = useMemo(() => {
+    const rawValue = searchParams.get("userId")
+    if (typeof rawValue !== "string") {
+      return null
+    }
+    const trimmed = rawValue.trim()
+    if (trimmed.length === 0) {
+      return null
+    }
+    return trimmed
+  }, [searchParams])
+
+  useEffect(() => {
+    setUserId(normalizedUserId)
+  }, [normalizedUserId, setUserId])
 
   const listSubtitle = useMemo(() => {
     if (!hasLoadedOnce && isLoadingList) {
@@ -71,8 +90,12 @@ export default function ContactSubmissionsPage() {
       subtitleText = `${subtitleText} • Updated ${formatDate(lastRefreshedAt)}`
     }
 
+    if (normalizedUserId) {
+      subtitleText = `${subtitleText} • User ${normalizedUserId}`
+    }
+
     return subtitleText
-  }, [hasLoadedOnce, isLoadingList, lastRefreshedAt, total])
+  }, [hasLoadedOnce, isLoadingList, lastRefreshedAt, normalizedUserId, total])
 
   const handleSelectSubmission = (submissionId) => {
     selectSubmission(submissionId)
