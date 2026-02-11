@@ -211,7 +211,7 @@ export const ServiceImageFallbackLarge = styled.div`
 `
 
 export const ServiceDetailImageAsset = styled(Image)`
-  object-fit: cover;
+  object-fit: contain;
 `
 
 export const ServiceDetailInfo = styled.div`
