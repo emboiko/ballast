@@ -179,7 +179,8 @@ export const chargeFinancingPlans = async ({
   }
   const resolvedPrisma = prismaClient || prisma
   const resolvedChargeInstallment = chargeInstallmentFn || chargeInstallment
-  const resolvedGetProcessorHandler = getProcessorHandlerFn || getProcessorHandler
+  const resolvedGetProcessorHandler =
+    getProcessorHandlerFn || getProcessorHandler
 
   const jobRun = await resolvedPrisma.jobRun.create({
     data: {
@@ -290,6 +291,9 @@ export const chargeFinancingPlans = async ({
         }
 
         const installmentKey = getInstallmentKey(installment.dueDate)
+        if (paidInstallments.has(installmentKey)) {
+          continue
+        }
         const latestPayment = latestPaymentByDateKey.get(installmentKey)
         if (latestPayment) {
           if (latestPayment.status === "SUCCEEDED") {
