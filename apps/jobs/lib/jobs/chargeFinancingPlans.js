@@ -81,6 +81,22 @@ const buildPaidInstallmentSet = (payments) => {
   return paidInstallments
 }
 
+const buildPendingInstallmentSet = (payments) => {
+  const pendingInstallments = new Set()
+
+  for (const payment of payments) {
+    if (payment?.status !== "PENDING") {
+      continue
+    }
+    if (!payment?.scheduledFor) {
+      continue
+    }
+    pendingInstallments.add(getInstallmentKey(payment.scheduledFor))
+  }
+
+  return pendingInstallments
+}
+
 const getNextPaymentDate = (installments, paidInstallments) => {
   for (const installment of installments) {
     const dateKey = getInstallmentKey(installment.dueDate)
@@ -241,6 +257,7 @@ export const chargeFinancingPlans = async ({
 
       const latestPaymentByDateKey = buildLatestPaymentMap(planPayments)
       const paidInstallments = buildPaidInstallmentSet(planPayments)
+      const pendingInstallments = buildPendingInstallmentSet(planPayments)
       let remainingBalanceCents = plan.remainingBalanceCents
       let failedPaymentAttempts = plan.failedPaymentAttempts || 0
       let updatedStatus = plan.status
@@ -292,6 +309,9 @@ export const chargeFinancingPlans = async ({
 
         const installmentKey = getInstallmentKey(installment.dueDate)
         if (paidInstallments.has(installmentKey)) {
+          continue
+        }
+        if (pendingInstallments.has(installmentKey)) {
           continue
         }
         const latestPayment = latestPaymentByDateKey.get(installmentKey)

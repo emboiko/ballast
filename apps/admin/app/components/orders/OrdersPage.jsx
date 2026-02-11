@@ -9,6 +9,7 @@ import { useOrders } from "@/contexts/OrdersContext"
 import { formatMoney } from "@ballast/shared/src/money.js"
 import { formatDate } from "@/utils/date"
 import { formatStatusLabel } from "@/utils/formatStatusLabel"
+import { getTrimmedSearchParamCaseInsensitive } from "@/utils/searchParams"
 import OrderGrowthChart from "@/components/orders/OrderGrowthChart"
 import {
   OrdersOverviewGrid,
@@ -77,15 +78,7 @@ export default function OrdersPage() {
   }))
 
   const normalizedUserId = useMemo(() => {
-    const rawValue = searchParams.get("userId")
-    if (typeof rawValue !== "string") {
-      return null
-    }
-    const trimmed = rawValue.trim()
-    if (trimmed.length === 0) {
-      return null
-    }
-    return trimmed
+    return getTrimmedSearchParamCaseInsensitive(searchParams, "userId")
   }, [searchParams])
 
   useEffect(() => {

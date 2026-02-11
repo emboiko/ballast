@@ -8,6 +8,7 @@ import { useContactSubmissions } from "@/contexts/ContactSubmissionsContext"
 import { useToast } from "@/contexts/ToastContext"
 import ConfirmationModal from "@/components/ui/ConfirmationModal"
 import { formatDate } from "@/utils/date"
+import { getTrimmedSearchParamCaseInsensitive } from "@/utils/searchParams"
 import {
   BodyBox,
   BodyText,
@@ -64,15 +65,7 @@ export default function ContactSubmissionsPage() {
   const [isDeleting, setIsDeleting] = useState(false)
 
   const normalizedUserId = useMemo(() => {
-    const rawValue = searchParams.get("userId")
-    if (typeof rawValue !== "string") {
-      return null
-    }
-    const trimmed = rawValue.trim()
-    if (trimmed.length === 0) {
-      return null
-    }
-    return trimmed
+    return getTrimmedSearchParamCaseInsensitive(searchParams, "userId")
   }, [searchParams])
 
   useEffect(() => {

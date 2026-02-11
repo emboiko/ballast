@@ -31,6 +31,7 @@ const navItems = [
   { href: "/users", icon: "👥", label: "Users" },
   { href: "/orders", icon: "📦", label: "Orders" },
   { href: "/financing", icon: "💳", label: "Financing" },
+  { href: "/subscriptions", icon: "📅", label: "Subscriptions" },
   { href: "/jobs", icon: "🧭", label: "Jobs" },
   { href: "/refunds", icon: "↩️", label: "Refunds" },
   { href: "/catalog/products", icon: "🗂️", label: "Catalog" },

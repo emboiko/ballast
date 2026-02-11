@@ -7,7 +7,6 @@ import {
   AccountNav,
   AccountNavItem,
   AccountNavItemActive,
-  AccountNavItemDisabled,
   AccountSidebarFooter,
 } from "@/components/account/accountStyles"
 import { SectionHeader } from "@/components/payment/paymentStyles"
@@ -31,9 +30,15 @@ export default function AccountSidebar({ activeSection }) {
             Orders
           </AccountNavItem>
         )}
-        <AccountNavItemDisabled title="Coming soon">
-          Subscriptions
-        </AccountNavItemDisabled>
+        {activeSection === "subscriptions" ? (
+          <AccountNavItemActive as={Link} href="/account/subscriptions">
+            Subscriptions
+          </AccountNavItemActive>
+        ) : (
+          <AccountNavItem as={Link} href="/account/subscriptions">
+            Subscriptions
+          </AccountNavItem>
+        )}
         {activeSection === "financing" ? (
           <AccountNavItemActive as={Link} href="/account/financing">
             Financing

@@ -8,6 +8,7 @@ import prisma from "../../../../packages/shared/src/db/client.js"
 import { formatMoney } from "../../../../packages/shared/src/money.js"
 import { sendOrderConfirmationEmail } from "../gateways/emailGateway.js"
 import { recordSystemEvent } from "./systemEvents.js"
+import { createServiceSubscriptionsFromOrder } from "./subscriptions.js"
 
 /**
  * Create a Stripe payment intent
@@ -71,6 +72,21 @@ export const confirmStripePayment = async (
 
   try {
     const order = await confirmPaymentIntent(userId, paymentIntentId, cartItems)
+
+    if (order.status === "succeeded") {
+      const subscriptionResult = await createServiceSubscriptionsFromOrder({
+        userId,
+        orderId: order.id,
+        paymentIntentId,
+      })
+
+      if (!subscriptionResult.success) {
+        return {
+          success: false,
+          error: subscriptionResult.error || "Failed to create subscription",
+        }
+      }
+    }
 
     if (order.isNew && order.status === "succeeded") {
       const orderWithDetails = await prisma.order.findUnique({

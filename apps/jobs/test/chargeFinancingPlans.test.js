@@ -570,3 +570,58 @@ test("does not double-charge an installment if any succeeded payment exists for 
   assert.equal(chargeInstallmentCalls.length, 0)
   assert.equal(data.payments.length, 2)
 })
+
+test("skips charging when any pending payment exists for due date (even if a newer failed exists)", async () => {
+  const plan = buildPlan({
+    overrides: {
+      remainingBalanceCents: 5000,
+    },
+  })
+  const dueDate = new Date("2026-01-10T00:00:00Z")
+
+  const olderPendingPayment = {
+    id: "payment_pending_old",
+    planId: plan.id,
+    type: "INSTALLMENT",
+    status: "PENDING",
+    amountCents: 5000,
+    currency: "usd",
+    scheduledFor: dueDate,
+    createdAt: new Date("2026-01-11T00:00:00Z"),
+  }
+  const newerFailedPayment = {
+    id: "payment_failed_newer",
+    planId: plan.id,
+    type: "INSTALLMENT",
+    status: "FAILED",
+    amountCents: 5000,
+    currency: "usd",
+    scheduledFor: dueDate,
+    createdAt: new Date("2026-01-12T00:00:00Z"),
+  }
+
+  const { prismaClient, data } = createMockPrisma({
+    plans: [plan],
+    payments: [newerFailedPayment, olderPendingPayment],
+  })
+
+  const chargeInstallmentCalls = []
+  const chargeInstallmentFn = async (input) => {
+    chargeInstallmentCalls.push(input)
+    return { success: true, paymentIntentId: "pi_should_not_happen" }
+  }
+
+  await chargeFinancingPlans({
+    prismaClient,
+    chargeInstallmentFn,
+    now: new Date("2026-01-15T00:00:00Z"),
+  })
+
+  assert.equal(chargeInstallmentCalls.length, 0)
+  assert.equal(data.payments.length, 2)
+  assert.equal(data.plans[0].remainingBalanceCents, 5000)
+  assert.equal(
+    data.plans[0].nextPaymentDate.toISOString(),
+    "2026-01-10T00:00:00.000Z"
+  )
+})

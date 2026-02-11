@@ -6,6 +6,8 @@ import SettingsSection from "@/components/account/SettingsSection"
 import OrderDetail from "@/components/account/OrderDetail"
 import FinancingList from "@/components/account/FinancingList"
 import FinancingDetail from "@/components/account/FinancingDetail"
+import SubscriptionsList from "@/components/account/SubscriptionsList"
+import SubscriptionDetail from "@/components/account/SubscriptionDetail"
 import {
   AccountLayout,
   AccountMain,
@@ -55,6 +57,30 @@ const renderFinancingSection = (financingPlanId) => {
   )
 }
 
+const renderSubscriptionsSection = (subscriptionId) => {
+  if (subscriptionId) {
+    return (
+      <AccountSection>
+        <SectionHeader>
+          <h2>Subscription Details</h2>
+        </SectionHeader>
+        <SubscriptionDetail subscriptionId={subscriptionId} />
+      </AccountSection>
+    )
+  }
+
+  return (
+    <AccountSection>
+      <SectionHeader>
+        <h2>Subscriptions</h2>
+      </SectionHeader>
+      <ScrollableCard>
+        <SubscriptionsList />
+      </ScrollableCard>
+    </AccountSection>
+  )
+}
+
 const renderSettingsSection = () => {
   return (
     <AccountSection>
@@ -72,11 +98,14 @@ function AccountLayoutComponent({
   section = "orders",
   orderId = null,
   financingPlanId = null,
+  subscriptionId = null,
 }) {
   let sectionContent = null
 
   if (section === "orders") {
     sectionContent = renderOrdersSection(orderId)
+  } else if (section === "subscriptions") {
+    sectionContent = renderSubscriptionsSection(subscriptionId)
   } else if (section === "financing") {
     sectionContent = renderFinancingSection(financingPlanId)
   } else if (section === "settings") {
@@ -95,12 +124,14 @@ export default function Account({
   section = "orders",
   orderId = null,
   financingPlanId = null,
+  subscriptionId = null,
 }) {
   return (
     <AccountLayoutComponent
       section={section}
       orderId={orderId}
       financingPlanId={financingPlanId}
+      subscriptionId={subscriptionId}
     />
   )
 }

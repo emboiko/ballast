@@ -2,8 +2,9 @@
 
 import Link from "next/link"
 import { usePayment } from "@/contexts/PaymentContext"
+import { useSubscriptions } from "@/contexts/SubscriptionsContext"
 import { formatMoney } from "@ballast/shared/src/money.js"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   ServiceDetailPage,
   ServiceDetailBack,
@@ -19,10 +20,18 @@ import {
   ServiceDetailHeader,
   ServiceDetailName,
   ServiceDetailPrice,
+  ServiceDetailPriceSuffix,
   ServiceDetailDescription,
   ServiceDetailLongDescription,
   ServiceDetailActions,
   ServiceDetailError,
+  BillingIntervalSection,
+  BillingIntervalTitle,
+  BillingIntervalList,
+  BillingIntervalOption,
+  BillingIntervalRadio,
+  BillingIntervalOptionPrice,
+  ServiceDetailSubscribedNotice,
 } from "@/components/services/serviceStyles"
 import {
   ButtonPrimary,
@@ -30,13 +39,34 @@ import {
   ButtonLarge,
 } from "@/components/ui/uiStyles"
 
+const formatIntervalLabel = (interval) => {
+  if (interval === "MONTHLY") {
+    return "Monthly"
+  }
+  if (interval === "QUARTERLY") {
+    return "Quarterly"
+  }
+  if (interval === "SEMI_ANNUAL") {
+    return "6-month"
+  }
+  if (interval === "ANNUAL") {
+    return "12-month"
+  }
+  return interval
+}
+
 export default function ServiceDetail({ service, isLoading = false }) {
   const { cart, addToCart } = usePayment()
+  const { getActiveSubscriptionForServiceId, isLoadingSubscriptions } =
+    useSubscriptions()
   const [addedToCart, setAddedToCart] = useState(false)
   const [activeImageIndex, setActiveImageIndex] = useState(0)
+  const [selectedInterval, setSelectedInterval] = useState(null)
 
   const cartItem = cart.find((item) => item.id === service?.id)
   const isInCart = !!cartItem
+  const activeSubscription = getActiveSubscriptionForServiceId(service?.id)
+  const isAlreadySubscribed = Boolean(activeSubscription)
 
   const images = Array.isArray(service?.images) ? service.images : []
   let primaryImageIndex = 0
@@ -54,6 +84,49 @@ export default function ServiceDetail({ service, isLoading = false }) {
     }
     setActiveImageIndex(primaryImageIndex)
   }, [images.length, primaryImageIndex])
+
+  const enabledIntervals = useMemo(() => {
+    const intervalPrices = service?.intervalPrices
+    if (!Array.isArray(intervalPrices)) {
+      return []
+    }
+
+    return intervalPrices
+      .filter((item) => item && item.isEnabled === true)
+      .filter((item) => typeof item.interval === "string")
+      .filter(
+        (item) => Number.isInteger(item.priceCents) && item.priceCents > 0
+      )
+  }, [service?.intervalPrices])
+
+  useEffect(() => {
+    if (!service) {
+      setSelectedInterval(null)
+      return
+    }
+
+    if (enabledIntervals.length === 0) {
+      setSelectedInterval("MONTHLY")
+      return
+    }
+
+    const existingSelection = enabledIntervals.find(
+      (item) => item.interval === selectedInterval
+    )
+    if (existingSelection) {
+      return
+    }
+
+    const monthlyOption = enabledIntervals.find(
+      (item) => item.interval === "MONTHLY"
+    )
+    if (monthlyOption) {
+      setSelectedInterval("MONTHLY")
+      return
+    }
+
+    setSelectedInterval(enabledIntervals[0].interval)
+  }, [enabledIntervals, selectedInterval, service])
 
   if (isLoading) {
     return (
@@ -80,13 +153,29 @@ export default function ServiceDetail({ service, isLoading = false }) {
     if (isInCart) {
       return // Service already in cart, don't add again
     }
+
+    let interval = selectedInterval
+    if (!interval) {
+      interval = "MONTHLY"
+    }
+
+    let priceCents = service.priceCents
+    const intervalMatch = enabledIntervals.find(
+      (item) => item.interval === interval
+    )
+    if (intervalMatch) {
+      priceCents = intervalMatch.priceCents
+    }
+
+    const intervalLabel = formatIntervalLabel(interval)
     addToCart({
       id: service.id,
       slug: service.slug,
-      name: service.name,
-      priceCents: service.priceCents,
+      name: `${service.name} (${intervalLabel})`,
+      priceCents,
       quantity: 1,
       type: "service",
+      subscriptionInterval: interval,
     })
     setAddedToCart(true)
     setTimeout(() => {
@@ -121,12 +210,63 @@ export default function ServiceDetail({ service, isLoading = false }) {
     actionButton = (
       <ButtonSuccessLarge disabled>✓ Already in Cart</ButtonSuccessLarge>
     )
+  } else if (isAlreadySubscribed) {
+    actionButton = (
+      <>
+        <ServiceDetailSubscribedNotice>
+          You’re already subscribed to this service.
+        </ServiceDetailSubscribedNotice>
+        <ButtonSuccessLarge disabled>✓ Already subscribed</ButtonSuccessLarge>
+      </>
+    )
   } else {
     actionButton = (
-      <ButtonLarge as="button" onClick={handleAddToCart}>
-        Add to Cart
-      </ButtonLarge>
+      <>
+        {enabledIntervals.length > 0 && (
+          <BillingIntervalSection>
+            <BillingIntervalTitle>Billing interval</BillingIntervalTitle>
+            <BillingIntervalList>
+              {enabledIntervals.map((option) => {
+                const isSelected = option.interval === selectedInterval
+                return (
+                  <BillingIntervalOption key={option.interval}>
+                    <BillingIntervalRadio
+                      type="radio"
+                      name="subscriptionInterval"
+                      value={option.interval}
+                      checked={isSelected}
+                      onChange={() => setSelectedInterval(option.interval)}
+                    />
+                    <span>{formatIntervalLabel(option.interval)}</span>
+                    <BillingIntervalOptionPrice>
+                      {formatMoney(option.priceCents)}
+                    </BillingIntervalOptionPrice>
+                  </BillingIntervalOption>
+                )
+              })}
+            </BillingIntervalList>
+          </BillingIntervalSection>
+        )}
+        <ButtonLarge as="button" onClick={handleAddToCart}>
+          Add to Cart
+        </ButtonLarge>
+        {isLoadingSubscriptions && (
+          <ServiceDetailSubscribedNotice>
+            Checking subscription…
+          </ServiceDetailSubscribedNotice>
+        )}
+      </>
     )
+  }
+
+  let displayPriceCents = service.priceCents
+  if (selectedInterval) {
+    const match = enabledIntervals.find(
+      (item) => item.interval === selectedInterval
+    )
+    if (match) {
+      displayPriceCents = match.priceCents
+    }
   }
 
   return (
@@ -165,7 +305,10 @@ export default function ServiceDetail({ service, isLoading = false }) {
           <ServiceDetailHeader>
             <ServiceDetailName>{service.name}</ServiceDetailName>
             <ServiceDetailPrice>
-              {formatMoney(service.priceCents)}
+              {formatMoney(displayPriceCents)}
+              {selectedInterval === "MONTHLY" && (
+                <ServiceDetailPriceSuffix>/month</ServiceDetailPriceSuffix>
+              )}
             </ServiceDetailPrice>
           </ServiceDetailHeader>
 

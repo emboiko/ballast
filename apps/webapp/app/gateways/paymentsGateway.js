@@ -39,7 +39,8 @@ export const confirmStripePayment = async (paymentIntentId, cartItems) => {
         name: item.name,
         priceCents: item.priceCents,
         quantity: item.quantity || 1,
-        type: item.type || (item.id === "demo-service" ? "service" : "item"),
+        type: item.type || "item",
+        subscriptionInterval: item.subscriptionInterval || null,
       })),
     }),
   })

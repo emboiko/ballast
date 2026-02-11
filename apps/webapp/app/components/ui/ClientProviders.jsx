@@ -5,6 +5,7 @@ import { AuthProvider } from "@/contexts/AuthContext"
 import { PaymentProvider } from "@/contexts/PaymentContext"
 import { OrdersProvider } from "@/contexts/OrdersContext"
 import { CatalogProvider } from "@/contexts/CatalogContext"
+import { SubscriptionsProvider } from "@/contexts/SubscriptionsContext"
 
 export default function ClientProviders({ children }) {
   return (
@@ -12,7 +13,9 @@ export default function ClientProviders({ children }) {
       <PaymentProvider>
         <OrdersProvider>
           <CatalogProvider>
-            <ThemeProvider>{children}</ThemeProvider>
+            <SubscriptionsProvider>
+              <ThemeProvider>{children}</ThemeProvider>
+            </SubscriptionsProvider>
           </CatalogProvider>
         </OrdersProvider>
       </PaymentProvider>

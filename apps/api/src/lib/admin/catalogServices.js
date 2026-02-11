@@ -5,6 +5,8 @@ import {
   serializeCatalogImages,
 } from "../catalog/images.js"
 
+const SUBSCRIPTION_INTERVALS = ["MONTHLY", "QUARTERLY", "SEMI_ANNUAL", "ANNUAL"]
+
 const normalizeOptionalString = (value) => {
   if (typeof value !== "string") {
     return null
@@ -18,6 +20,33 @@ const normalizeOptionalString = (value) => {
   return trimmed
 }
 
+const intervalPriceSchema = z.object({
+  interval: z.enum(SUBSCRIPTION_INTERVALS),
+  priceCents: z.coerce.number().int().nonnegative(),
+  isEnabled: z.boolean(),
+})
+
+const intervalPricesSchema = z
+  .array(intervalPriceSchema)
+  .max(SUBSCRIPTION_INTERVALS.length)
+  .optional()
+  .superRefine((items, context) => {
+    if (!items) {
+      return
+    }
+    const seen = new Set()
+    for (const item of items) {
+      if (seen.has(item.interval)) {
+        context.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Duplicate interval in intervalPrices",
+        })
+        return
+      }
+      seen.add(item.interval)
+    }
+  })
+
 const serviceBaseSchema = z.object({
   slug: z.string().trim().min(1),
   name: z.string().trim().min(1),
@@ -25,11 +54,65 @@ const serviceBaseSchema = z.object({
   longDescription: z.string().optional().nullable(),
   priceCents: z.coerce.number().int().nonnegative(),
   isActive: z.boolean().optional(),
+  intervalPrices: intervalPricesSchema,
 })
 
 const serviceCreateSchema = serviceBaseSchema
 
 const serviceUpdateSchema = serviceBaseSchema.partial()
+
+const applyDiscountBasisPoints = (amountCents, discountBasisPoints) => {
+  const multiplierBasisPoints = 10000 - discountBasisPoints
+  return Math.floor((amountCents * multiplierBasisPoints + 5000) / 10000)
+}
+
+const buildDefaultIntervalPrices = ({ monthlyPriceCents }) => {
+  const base = monthlyPriceCents
+
+  return [
+    { interval: "MONTHLY", priceCents: base, isEnabled: true },
+    {
+      interval: "QUARTERLY",
+      priceCents: applyDiscountBasisPoints(base * 3, 500),
+      isEnabled: true,
+    },
+    {
+      interval: "SEMI_ANNUAL",
+      priceCents: applyDiscountBasisPoints(base * 6, 1000),
+      isEnabled: true,
+    },
+    {
+      interval: "ANNUAL",
+      priceCents: applyDiscountBasisPoints(base * 12, 1000),
+      isEnabled: true,
+    },
+  ]
+}
+
+const normalizeIntervalPrices = ({ intervalPrices, monthlyPriceCents }) => {
+  if (!intervalPrices) {
+    return buildDefaultIntervalPrices({ monthlyPriceCents })
+  }
+
+  const byInterval = new Map()
+  for (const item of intervalPrices) {
+    byInterval.set(item.interval, {
+      interval: item.interval,
+      priceCents: item.priceCents,
+      isEnabled: item.isEnabled,
+    })
+  }
+
+  const normalized = []
+  for (const interval of SUBSCRIPTION_INTERVALS) {
+    const item = byInterval.get(interval)
+    if (item) {
+      normalized.push(item)
+    }
+  }
+
+  return normalized
+}
 
 const buildServiceCreateData = (payload) => {
   const result = serviceCreateSchema.safeParse(payload)
@@ -47,6 +130,11 @@ const buildServiceCreateData = (payload) => {
     isActive = data.isActive
   }
 
+  const intervalPrices = normalizeIntervalPrices({
+    intervalPrices: data.intervalPrices,
+    monthlyPriceCents: data.priceCents,
+  })
+
   return {
     success: true,
     data: {
@@ -57,6 +145,7 @@ const buildServiceCreateData = (payload) => {
       priceCents: data.priceCents,
       isActive,
     },
+    intervalPrices,
   }
 }
 
@@ -68,6 +157,7 @@ const buildServiceUpdateData = (payload) => {
 
   const data = result.data
   const updateData = {}
+  let intervalPrices = undefined
 
   if (Object.prototype.hasOwnProperty.call(data, "slug")) {
     updateData.slug = data.slug
@@ -87,8 +177,18 @@ const buildServiceUpdateData = (payload) => {
   if (Object.prototype.hasOwnProperty.call(data, "isActive")) {
     updateData.isActive = data.isActive
   }
+  if (Object.prototype.hasOwnProperty.call(data, "intervalPrices")) {
+    if (data.priceCents === undefined) {
+      intervalPrices = data.intervalPrices
+    } else {
+      intervalPrices = normalizeIntervalPrices({
+        intervalPrices: data.intervalPrices,
+        monthlyPriceCents: data.priceCents,
+      })
+    }
+  }
 
-  return { success: true, data: updateData }
+  return { success: true, data: updateData, intervalPrices }
 }
 
 export const listCatalogServicesAdmin = async ({ status }) => {
@@ -105,6 +205,17 @@ export const listCatalogServicesAdmin = async ({ status }) => {
     where,
     orderBy: [{ createdAt: "desc" }],
     include: {
+      intervalPrices: {
+        select: {
+          id: true,
+          interval: true,
+          priceCents: true,
+          isEnabled: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: [{ interval: "asc" }],
+      },
       images: {
         select: {
           id: true,
@@ -125,9 +236,10 @@ export const listCatalogServicesAdmin = async ({ status }) => {
   })
 
   const serialized = services.map((service) => {
-    const { images, ...rest } = service
+    const { images, intervalPrices, ...rest } = service
     return {
       ...rest,
+      intervalPrices,
       images: serializeCatalogImages(images),
       primaryImageUrl: getPrimaryImageUrl(images),
     }
@@ -143,8 +255,30 @@ export const createCatalogService = async (payload) => {
   }
 
   const service = await prisma.service.create({
-    data: normalized.data,
+    data: {
+      ...normalized.data,
+      intervalPrices: {
+        create: normalized.intervalPrices.map((item) => {
+          return {
+            interval: item.interval,
+            priceCents: item.priceCents,
+            isEnabled: item.isEnabled,
+          }
+        }),
+      },
+    },
     include: {
+      intervalPrices: {
+        select: {
+          id: true,
+          interval: true,
+          priceCents: true,
+          isEnabled: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: [{ interval: "asc" }],
+      },
       images: {
         select: {
           id: true,
@@ -164,11 +298,12 @@ export const createCatalogService = async (payload) => {
     },
   })
 
-  const { images, ...rest } = service
+  const { images, intervalPrices, ...rest } = service
   return {
     success: true,
     service: {
       ...rest,
+      intervalPrices,
       images: serializeCatalogImages(images),
       primaryImageUrl: getPrimaryImageUrl(images),
     },
@@ -185,14 +320,60 @@ export const updateCatalogService = async (serviceId, payload) => {
     return normalized
   }
 
-  if (Object.keys(normalized.data).length === 0) {
+  const hasServiceUpdate = Object.keys(normalized.data).length > 0
+  const hasIntervalUpdates = Array.isArray(normalized.intervalPrices)
+
+  if (!hasServiceUpdate && !hasIntervalUpdates) {
     return { success: false, error: "No fields provided for update" }
   }
 
-  const service = await prisma.service.update({
+  await prisma.$transaction(async (transactionClient) => {
+    if (hasServiceUpdate) {
+      await transactionClient.service.update({
+        where: { id: serviceId },
+        data: normalized.data,
+      })
+    }
+
+    if (hasIntervalUpdates) {
+      const updates = normalized.intervalPrices
+      for (const item of updates) {
+        await transactionClient.serviceIntervalPrice.upsert({
+          where: {
+            serviceId_interval: {
+              serviceId,
+              interval: item.interval,
+            },
+          },
+          update: {
+            priceCents: item.priceCents,
+            isEnabled: item.isEnabled,
+          },
+          create: {
+            serviceId,
+            interval: item.interval,
+            priceCents: item.priceCents,
+            isEnabled: item.isEnabled,
+          },
+        })
+      }
+    }
+  })
+
+  const service = await prisma.service.findUnique({
     where: { id: serviceId },
-    data: normalized.data,
     include: {
+      intervalPrices: {
+        select: {
+          id: true,
+          interval: true,
+          priceCents: true,
+          isEnabled: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        orderBy: [{ interval: "asc" }],
+      },
       images: {
         select: {
           id: true,
@@ -212,11 +393,16 @@ export const updateCatalogService = async (serviceId, payload) => {
     },
   })
 
-  const { images, ...rest } = service
+  if (!service) {
+    return { success: false, error: "Service not found" }
+  }
+
+  const { images, intervalPrices, ...rest } = service
   return {
     success: true,
     service: {
       ...rest,
+      intervalPrices,
       images: serializeCatalogImages(images),
       primaryImageUrl: getPrimaryImageUrl(images),
     },

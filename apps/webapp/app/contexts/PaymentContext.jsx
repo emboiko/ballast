@@ -81,6 +81,7 @@ export function PaymentProvider({ children }) {
         priceCents: item.priceCents,
         quantity: item.quantity || 1,
         type: item.type,
+        subscriptionInterval: item.subscriptionInterval,
       }
     })
     return JSON.stringify(signatureItems)
@@ -139,21 +140,6 @@ export function PaymentProvider({ children }) {
   const hasService = useCallback(() => {
     return cart.some((item) => item.type === "service")
   }, [cart])
-
-  const toggleService = useCallback(() => {
-    if (hasService()) {
-      removeFromCart("demo-service")
-    } else {
-      addToCart({
-        id: "demo-service",
-        slug: "demo-service",
-        name: "Demo Service (Monthly)",
-        priceCents: 999,
-        quantity: 1,
-        type: "service",
-      })
-    }
-  }, [hasService, addToCart, removeFromCart])
 
   // Returns subtotal in cents (integer)
   const getCartSubtotalCents = useCallback(() => {
@@ -238,17 +224,17 @@ export function PaymentProvider({ children }) {
   )
 
   // Called by payment form components to register their checkout handler
-  const registerCheckoutHandler = useCallback((handler) => {
-    checkoutHandlerRef.current = handler
-    const isReady = typeof handler === "function"
-    setIsPaymentFormReady(isReady)
-    if (
-      isReady &&
-      checkoutResult?.error === "Payment form not ready"
-    ) {
-      setCheckoutResult(null)
-    }
-  }, [checkoutResult])
+  const registerCheckoutHandler = useCallback(
+    (handler) => {
+      checkoutHandlerRef.current = handler
+      const isReady = typeof handler === "function"
+      setIsPaymentFormReady(isReady)
+      if (isReady && checkoutResult?.error === "Payment form not ready") {
+        setCheckoutResult(null)
+      }
+    },
+    [checkoutResult]
+  )
 
   // Main checkout function - delegates to the registered processor handler
   const checkout = useCallback(async () => {
@@ -412,7 +398,6 @@ export function PaymentProvider({ children }) {
     updateQuantity,
     clearCart,
     hasService,
-    toggleService,
     getCartSubtotalCents,
     getFeesTotalCents,
     getCartTotalCents,

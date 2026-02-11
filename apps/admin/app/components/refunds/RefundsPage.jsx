@@ -10,6 +10,7 @@ import { formatMoney } from "@ballast/shared/src/money.js"
 import { REFUNDS_PAGE_SIZE } from "@/constants"
 import SectionNav from "@/components/ui/SectionNav"
 import { formatStatusLabel } from "@/utils/formatStatusLabel"
+import { getTrimmedSearchParamCaseInsensitive } from "@/utils/searchParams"
 import {
   RefundsContainer,
   RefundsFiltersRow,
@@ -46,15 +47,7 @@ export default function RefundsPage() {
   const hasMore = refunds.length < total
 
   const normalizedUserId = useMemo(() => {
-    const rawValue = searchParams.get("userId")
-    if (typeof rawValue !== "string") {
-      return null
-    }
-    const trimmed = rawValue.trim()
-    if (trimmed.length === 0) {
-      return null
-    }
-    return trimmed
+    return getTrimmedSearchParamCaseInsensitive(searchParams, "userId")
   }, [searchParams])
 
   const loadStatusCounts = useCallback(async () => {

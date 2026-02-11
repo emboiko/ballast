@@ -39,6 +39,26 @@ enum FinancingCadence {
   MONTHLY
 }
 
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  DEFAULTED
+}
+
+enum SubscriptionPaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  CANCELED
+}
+
+enum SubscriptionInterval {
+  MONTHLY
+  QUARTERLY
+  SEMI_ANNUAL
+  ANNUAL
+}
+
 // Types of verification tokens
 enum TokenType {
   EMAIL_VERIFICATION
@@ -101,7 +121,7 @@ model User {
   contactSubmissions   ContactSubmission[]
   communicationEmails  CommunicationEmail[]
   financingPlans       FinancingPlan[]
-  // TODO: Add subscriptions relations
+  serviceSubscriptions ServiceSubscription[]
 }
 
 model VerificationToken {
@@ -216,6 +236,62 @@ model FinancingContract {
   @@index([createdAt])
 }
 
+model ServiceSubscription {
+  id                       String             @id @default(cuid())
+  userId                   String
+  user                     User               @relation(fields: [userId], references: [id])
+  serviceId                String
+  service                  Service            @relation(fields: [serviceId], references: [id])
+
+  processor                PaymentProcessor
+  processorPaymentMethodId String
+  processorCustomerId      String?
+  processorPaymentMethod   Json?
+
+  currency                 String             @default("usd")
+  interval                 SubscriptionInterval
+  priceCents               Int
+
+  status                   SubscriptionStatus @default(ACTIVE)
+  nextChargeDate           DateTime?
+  failedPaymentAttempts    Int                @default(0)
+  lastFailedChargeAt       DateTime?
+  endedAt                  DateTime?
+
+  payments                 ServiceSubscriptionPayment[]
+
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([serviceId])
+  @@index([status])
+  @@index([nextChargeDate])
+  @@index([userId, serviceId])
+}
+
+model ServiceSubscriptionPayment {
+  id                 String                  @id @default(cuid())
+  subscriptionId     String
+  subscription       ServiceSubscription     @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  status             SubscriptionPaymentStatus @default(PENDING)
+  amountCents        Int
+  currency           String                  @default("usd")
+  scheduledFor       DateTime
+  paidAt             DateTime?
+  failureMessage     String?
+
+  processorPaymentId String?
+
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+
+  @@index([subscriptionId])
+  @@index([status])
+  @@index([scheduledFor])
+}
+
 model Refund {
   id                String   @id @default(cuid())
   orderId           String
@@ -254,6 +330,7 @@ model OrderItem {
   priceCents  Int      // Price per unit in cents
   quantity    Int      @default(1)
   type        String   @default("item") // "item" or "service"
+  subscriptionInterval SubscriptionInterval?
   
   // Future: thumbnail URL
   thumbnailUrl String?
@@ -261,6 +338,7 @@ model OrderItem {
   createdAt   DateTime @default(now())
   
   @@index([orderId])
+  @@index([subscriptionInterval])
 }
 
 model Product {
@@ -293,10 +371,28 @@ model Service {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   images          CatalogImage[]
+  intervalPrices  ServiceIntervalPrice[]
+  subscriptions   ServiceSubscription[]
 
   @@index([slug])
   @@index([isActive])
   @@index([createdAt])
+}
+
+model ServiceIntervalPrice {
+  id        String               @id @default(cuid())
+  serviceId String
+  service   Service              @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  interval  SubscriptionInterval
+  priceCents Int
+  isEnabled Boolean              @default(false)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+
+  @@unique([serviceId, interval])
+  @@index([serviceId])
+  @@index([interval])
+  @@index([isEnabled])
 }
 
 model ContactSubmission {

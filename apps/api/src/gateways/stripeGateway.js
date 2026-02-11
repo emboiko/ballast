@@ -69,6 +69,7 @@ export const createPaymentIntent = async (
       amount: amountCents,
       currency,
       payment_method_types: ["card"],
+      setup_future_usage: "off_session",
     })
   } catch (error) {
     console.error("Stripe payment intent creation failed:", error)
@@ -91,9 +92,8 @@ export const createPaymentIntent = async (
  */
 export const cancelPaymentIntent = async (paymentIntentId) => {
   try {
-    const existingIntent = await getStripe().paymentIntents.retrieve(
-      paymentIntentId
-    )
+    const existingIntent =
+      await getStripe().paymentIntents.retrieve(paymentIntentId)
     const cancelableStatuses = new Set([
       "requires_payment_method",
       "requires_capture",
@@ -107,9 +107,8 @@ export const cancelPaymentIntent = async (paymentIntentId) => {
       return { id: existingIntent.id, status: existingIntent.status }
     }
 
-    const paymentIntent = await getStripe().paymentIntents.cancel(
-      paymentIntentId
-    )
+    const paymentIntent =
+      await getStripe().paymentIntents.cancel(paymentIntentId)
     return { id: paymentIntent.id, status: paymentIntent.status }
   } catch (error) {
     console.error("Stripe payment intent cancel failed:", error)
@@ -159,6 +158,38 @@ export const confirmPaymentIntent = async (
     return { id: existingOrder.id, status: existingOrder.status, isNew: false }
   }
 
+  const orderItems = cartItems.map((item) => {
+    let resolvedType = item.type
+    if (!resolvedType) {
+      resolvedType = "item"
+    }
+
+    let subscriptionInterval = null
+    if (
+      resolvedType === "service" &&
+      typeof item.subscriptionInterval === "string"
+    ) {
+      const normalizedInterval = item.subscriptionInterval.trim().toUpperCase()
+      if (
+        normalizedInterval === "MONTHLY" ||
+        normalizedInterval === "QUARTERLY" ||
+        normalizedInterval === "SEMI_ANNUAL" ||
+        normalizedInterval === "ANNUAL"
+      ) {
+        subscriptionInterval = normalizedInterval
+      }
+    }
+
+    return {
+      itemId: item.id,
+      name: item.name,
+      priceCents: item.priceCents,
+      quantity: item.quantity || 1,
+      type: resolvedType,
+      subscriptionInterval,
+    }
+  })
+
   // Create the order record with items
   const order = await prisma.order.create({
     data: {
@@ -169,13 +200,7 @@ export const confirmPaymentIntent = async (
       currency: paymentIntent.currency,
       status: "succeeded",
       items: {
-        create: cartItems.map((item) => ({
-          itemId: item.id,
-          name: item.name,
-          priceCents: item.priceCents,
-          quantity: item.quantity || 1,
-          type: item.type || (item.id === "demo-service" ? "service" : "item"),
-        })),
+        create: orderItems,
       },
     },
   })
@@ -247,9 +272,8 @@ export const getPaymentIntentSummary = async (paymentIntentId) => {
     if (paymentIntent.payment_method) {
       if (typeof paymentIntent.payment_method === "string") {
         paymentMethodId = paymentIntent.payment_method
-        const paymentMethod = await getStripe().paymentMethods.retrieve(
-          paymentMethodId
-        )
+        const paymentMethod =
+          await getStripe().paymentMethods.retrieve(paymentMethodId)
 
         if (paymentMethod.type === "card" && paymentMethod.card) {
           paymentMethodDetails = {

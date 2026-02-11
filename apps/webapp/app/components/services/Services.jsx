@@ -14,6 +14,7 @@ import {
   ServiceSectionTitle,
   ServiceSectionDescription,
   ServiceSectionPrice,
+  ServiceSectionPriceSuffix,
   ServiceSectionScrollIndicator,
   ServiceImage,
 } from "@/components/services/serviceStyles"
@@ -104,6 +105,7 @@ export default function Services() {
                 </ServiceSectionDescription>
                 <ServiceSectionPrice>
                   {formatMoney(service.priceCents)}
+                  <ServiceSectionPriceSuffix>/month</ServiceSectionPriceSuffix>
                 </ServiceSectionPrice>
                 <ButtonLarge as={Link} href={`/services/${service.slug}`}>
                   Learn More

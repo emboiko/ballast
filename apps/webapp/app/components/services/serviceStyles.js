@@ -103,6 +103,13 @@ export const ServiceSectionPrice = styled.div`
   color: var(--button-primary-bg);
 `
 
+export const ServiceSectionPriceSuffix = styled.span`
+  margin-left: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+`
+
 export const ServiceSectionScrollIndicator = styled.div`
   position: absolute;
   bottom: 2rem;
@@ -239,6 +246,13 @@ export const ServiceDetailPrice = styled.p`
   color: var(--button-primary-bg);
 `
 
+export const ServiceDetailPriceSuffix = styled.span`
+  margin-left: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+`
+
 export const ServiceDetailDescription = styled.div`
   display: flex;
   flex-direction: column;
@@ -279,8 +293,57 @@ export const ServiceDetailLongDescription = styled.div`
 
 export const ServiceDetailActions = styled.div`
   display: flex;
+  flex-direction: column;
   gap: 1rem;
-  flex-wrap: wrap;
+  align-items: flex-start;
+`
+
+export const BillingIntervalSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`
+
+export const BillingIntervalTitle = styled.p`
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+`
+
+export const BillingIntervalList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`
+
+export const BillingIntervalOption = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 0.975rem;
+
+  &:focus-within {
+    border-radius: 6px;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+  }
+`
+
+export const BillingIntervalRadio = styled.input`
+  margin: 0;
+`
+
+export const BillingIntervalOptionPrice = styled.span`
+  color: var(--text-primary);
+  font-weight: 600;
+`
+
+export const ServiceDetailSubscribedNotice = styled.p`
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
 `
 
 export const ServiceDetailError = styled.div`

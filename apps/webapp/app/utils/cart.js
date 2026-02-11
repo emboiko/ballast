@@ -2,7 +2,7 @@ import { CART_STORAGE_KEY } from "@/constants"
 
 // This file implements some rudimentary cart functionality for the webapp.
 // Ideally, we'll want to move this to a more robust cart service that can be used by the API, jobs, etc.
-// If we start storing this in the DB, we can support a leads section in the admin panel as well. 
+// If we start storing this in the DB, we can support a leads section in the admin panel as well.
 // For now, this is a simple implementation to improve the user and dev experience.
 // This doesn't handle things like:
 // - Cart persistence across devices
@@ -20,7 +20,8 @@ const sanitizeCartItem = (rawItem) => {
     return null
   }
 
-  const { id, slug, name, priceCents, quantity, type } = rawItem
+  const { id, slug, name, priceCents, quantity, type, subscriptionInterval } =
+    rawItem
 
   if (id === undefined || id === null) {
     return null
@@ -54,6 +55,21 @@ const sanitizeCartItem = (rawItem) => {
 
   if (typeof slug === "string" && slug.trim().length > 0) {
     sanitizedItem.slug = slug
+  }
+
+  if (
+    normalizedType === "service" &&
+    typeof subscriptionInterval === "string"
+  ) {
+    const normalizedInterval = subscriptionInterval.trim().toUpperCase()
+    if (
+      normalizedInterval === "MONTHLY" ||
+      normalizedInterval === "QUARTERLY" ||
+      normalizedInterval === "SEMI_ANNUAL" ||
+      normalizedInterval === "ANNUAL"
+    ) {
+      sanitizedItem.subscriptionInterval = normalizedInterval
+    }
   }
 
   return sanitizedItem

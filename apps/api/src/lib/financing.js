@@ -44,8 +44,7 @@ const calculateCartTotalCents = (cartItems) => {
   }
 
   return cartItems.reduce((sum, item) => {
-    const priceCents =
-      typeof item.priceCents === "number" ? item.priceCents : 0
+    const priceCents = typeof item.priceCents === "number" ? item.priceCents : 0
     const quantity = typeof item.quantity === "number" ? item.quantity : 1
     return sum + priceCents * Math.max(quantity, 1)
   }, 0)
@@ -57,7 +56,8 @@ const calculateFeesTotalCents = (fees) => {
   }
 
   return fees.reduce((sum, fee) => {
-    const amountCents = typeof fee.amountCents === "number" ? fee.amountCents : 0
+    const amountCents =
+      typeof fee.amountCents === "number" ? fee.amountCents : 0
     return sum + amountCents
   }, 0)
 }
@@ -72,9 +72,12 @@ const buildInstallmentSchedule = ({
   const remainder = financedAmountCents - baseAmount * termCount
   const installments = []
 
-  for (let installmentIndex = 0; installmentIndex < termCount; installmentIndex += 1) {
-    const amountCents =
-      baseAmount + (installmentIndex < remainder ? 1 : 0)
+  for (
+    let installmentIndex = 0;
+    installmentIndex < termCount;
+    installmentIndex += 1
+  ) {
+    const amountCents = baseAmount + (installmentIndex < remainder ? 1 : 0)
     let dueDate = null
 
     if (cadence === "WEEKLY") {
@@ -153,12 +156,24 @@ export const createFinancingPlanFromCheckout = async ({
     return { success: false, error: "Cadence must be weekly or monthly" }
   }
 
-  if (!Number.isInteger(termCount) || termCount < 1 || termCount > MAX_TERM_COUNT) {
+  if (
+    !Number.isInteger(termCount) ||
+    termCount < 1 ||
+    termCount > MAX_TERM_COUNT
+  ) {
     return { success: false, error: "Invalid term count" }
   }
 
   if (!Array.isArray(cartItems) || cartItems.length === 0) {
     return { success: false, error: "Cart items are required" }
+  }
+
+  const hasServiceItem = cartItems.some((item) => item?.type === "service")
+  if (hasServiceItem) {
+    return {
+      success: false,
+      error: "Services cannot be purchased with financing",
+    }
   }
 
   const cartTotalCents = calculateCartTotalCents(cartItems)
@@ -168,7 +183,10 @@ export const createFinancingPlanFromCheckout = async ({
     return { success: false, error: "Cart total must be greater than zero" }
   }
 
-  const downPaymentCents = percentOfMoney(totalAmountCents, DOWN_PAYMENT_PERCENT)
+  const downPaymentCents = percentOfMoney(
+    totalAmountCents,
+    DOWN_PAYMENT_PERCENT
+  )
   const financedAmountCents = totalAmountCents - downPaymentCents
 
   if (downPaymentCents <= 0) {
@@ -176,7 +194,10 @@ export const createFinancingPlanFromCheckout = async ({
   }
 
   if (financedAmountCents <= 0) {
-    return { success: false, error: "Financed amount must be greater than zero" }
+    return {
+      success: false,
+      error: "Financed amount must be greater than zero",
+    }
   }
 
   const installments = buildInstallmentSchedule({
@@ -186,7 +207,8 @@ export const createFinancingPlanFromCheckout = async ({
     startDate: new Date(),
   })
 
-  const installmentAmountCents = installments[0]?.amountCents ?? financedAmountCents
+  const installmentAmountCents =
+    installments[0]?.amountCents ?? financedAmountCents
   const nextPaymentDate = installments[0]
     ? new Date(installments[0].dueDate)
     : null
@@ -254,7 +276,7 @@ export const createFinancingPlanFromCheckout = async ({
             name: item.name,
             priceCents: item.priceCents,
             quantity: item.quantity || 1,
-            type: item.type || (item.id === "demo-service" ? "service" : "item"),
+            type: item.type || "item",
           })),
         },
       },
@@ -511,4 +533,3 @@ export const recordPrincipalPayment = async ({
     plan: updatedPlan,
   }
 }
-

@@ -57,6 +57,11 @@ export {
 } from "./catalogServices.js"
 
 export {
+  listServiceSubscriptions,
+  getServiceSubscriptionById,
+} from "./subscriptions.js"
+
+export {
   addCatalogProductImages,
   addCatalogServiceImages,
   updateCatalogProductImages,

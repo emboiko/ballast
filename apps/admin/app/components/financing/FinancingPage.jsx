@@ -8,6 +8,7 @@ import { fetchFinancingPlans } from "@/gateways/financingGateway"
 import { formatMoney } from "@ballast/shared/src/money.js"
 import { formatDate } from "@/utils/date"
 import { formatStatusLabel } from "@/utils/formatStatusLabel"
+import { getTrimmedSearchParamCaseInsensitive } from "@/utils/searchParams"
 import {
   FinancingLayout,
   FinancingCard,
@@ -38,15 +39,7 @@ export default function FinancingPage() {
   const [activeStatusFilter, setActiveStatusFilter] = useState("ACTIVE")
 
   const normalizedUserId = useMemo(() => {
-    const rawValue = searchParams.get("userId")
-    if (typeof rawValue !== "string") {
-      return null
-    }
-    const trimmed = rawValue.trim()
-    if (trimmed.length === 0) {
-      return null
-    }
-    return trimmed
+    return getTrimmedSearchParamCaseInsensitive(searchParams, "userId")
   }, [searchParams])
 
   const loadPlans = useCallback(async () => {

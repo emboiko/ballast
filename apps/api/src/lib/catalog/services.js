@@ -9,6 +9,15 @@ export const listCatalogServices = async () => {
     where: { isActive: true },
     orderBy: [{ createdAt: "asc" }],
     include: {
+      intervalPrices: {
+        where: { isEnabled: true },
+        select: {
+          interval: true,
+          priceCents: true,
+          isEnabled: true,
+        },
+        orderBy: [{ interval: "asc" }],
+      },
       images: {
         select: {
           id: true,
@@ -29,9 +38,10 @@ export const listCatalogServices = async () => {
   })
 
   const serialized = services.map((service) => {
-    const { images, ...rest } = service
+    const { images, intervalPrices, ...rest } = service
     return {
       ...rest,
+      intervalPrices,
       images: serializeCatalogImages(images),
       primaryImageUrl: getPrimaryImageUrl(images),
     }
@@ -48,6 +58,15 @@ export const getCatalogServiceBySlug = async (slug) => {
   const service = await prisma.service.findFirst({
     where: { slug, isActive: true },
     include: {
+      intervalPrices: {
+        where: { isEnabled: true },
+        select: {
+          interval: true,
+          priceCents: true,
+          isEnabled: true,
+        },
+        orderBy: [{ interval: "asc" }],
+      },
       images: {
         select: {
           id: true,
@@ -71,11 +90,12 @@ export const getCatalogServiceBySlug = async (slug) => {
     return { success: false, error: "Service not found" }
   }
 
-  const { images, ...rest } = service
+  const { images, intervalPrices, ...rest } = service
   return {
     success: true,
     service: {
       ...rest,
+      intervalPrices,
       images: serializeCatalogImages(images),
       primaryImageUrl: getPrimaryImageUrl(images),
     },
