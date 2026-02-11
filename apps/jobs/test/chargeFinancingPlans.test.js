@@ -271,6 +271,39 @@ test("defaults plan after three failed attempts and stores failure message", asy
   assert.equal(data.plans[0].nextPaymentDate, null)
 })
 
+test("sends internal notifications on failed installment and default", async () => {
+  const plan = buildPlan({
+    overrides: {
+      failedPaymentAttempts: 2,
+    },
+  })
+  const { prismaClient } = createMockPrisma({ plans: [plan] })
+
+  const postCalls = []
+  const postInternalApiFn = async (input) => {
+    postCalls.push(input)
+    return { success: true, data: { sent: true } }
+  }
+
+  const chargeInstallmentFn = async () => {
+    return { success: false, error: "insufficient funds" }
+  }
+
+  await chargeFinancingPlans({
+    prismaClient,
+    chargeInstallmentFn,
+    postInternalApiFn,
+    now: new Date("2026-01-15T00:00:00Z"),
+  })
+
+  assert.equal(postCalls.length, 2)
+  assert.equal(postCalls[0].route, "/internal/notifications/financing/charge-failed")
+  assert.equal(typeof postCalls[0].body.paymentId, "string")
+
+  assert.equal(postCalls[1].route, "/internal/notifications/financing/defaulted")
+  assert.equal(postCalls[1].body.planId, plan.id)
+})
+
 test("skips installment when latest payment is pending", async () => {
   const plan = buildPlan()
   const existingPendingPayment = {

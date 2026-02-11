@@ -1,5 +1,6 @@
 import prisma from "../../../../packages/shared/src/db/client.js"
 import { chargeStripePayment } from "../gateways/stripeGateway.js"
+import { postInternalApi } from "../gateways/internalApiGateway.js"
 
 const JOB_TYPE = "chargeSubscriptions"
 const MAX_FAILED_ATTEMPTS = 3
@@ -214,6 +215,7 @@ export const chargeSubscriptions = async ({
   prismaClient,
   chargeRenewalFn,
   getProcessorHandlerFn,
+  postInternalApiFn,
 } = {}) => {
   const log = logger || console
   let currentTime = now
@@ -225,6 +227,7 @@ export const chargeSubscriptions = async ({
   const resolvedChargeRenewal = chargeRenewalFn || chargeRenewal
   const resolvedGetProcessorHandler =
     getProcessorHandlerFn || getProcessorHandler
+  const resolvedPostInternalApi = postInternalApiFn || postInternalApi
 
   const jobRun = await resolvedPrisma.jobRun.create({
     data: {
@@ -521,6 +524,19 @@ export const chargeSubscriptions = async ({
           },
         })
 
+        try {
+          await resolvedPostInternalApi({
+            route: "/internal/notifications/subscriptions/charge-failed",
+            body: { paymentId: payment.id },
+          })
+        } catch (error) {
+          log.warn("failed to send subscription charge-failed notification", {
+            subscriptionId: subscription.id,
+            paymentId: payment.id,
+            message: error?.message || "Notification failed",
+          })
+        }
+
         failedPaymentAttempts += 1
         failedPayments += 1
 
@@ -550,6 +566,20 @@ export const chargeSubscriptions = async ({
             endedAt,
           },
         })
+
+        if (updatedStatus === "DEFAULTED") {
+          try {
+            await resolvedPostInternalApi({
+              route: "/internal/notifications/subscriptions/defaulted",
+              body: { subscriptionId: subscription.id },
+            })
+          } catch (error) {
+            log.warn("failed to send subscription defaulted notification", {
+              subscriptionId: subscription.id,
+              message: error?.message || "Notification failed",
+            })
+          }
+        }
       }
 
       processedSubscriptions += 1

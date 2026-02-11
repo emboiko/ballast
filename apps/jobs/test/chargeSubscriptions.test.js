@@ -266,6 +266,49 @@ test("retries renewal over three consecutive days then defaults", async () => {
   assert.equal(data.payments.length, 3)
 })
 
+test("sends internal notifications on failed renewal and default", async () => {
+  const subscription = buildSubscription({
+    overrides: {
+      failedPaymentAttempts: 2,
+      lastFailedChargeAt: null,
+      nextChargeDate: new Date("2026-01-10T00:00:00Z"),
+    },
+  })
+  const { prismaClient } = createMockPrisma({
+    subscriptions: [subscription],
+  })
+
+  const postCalls = []
+  const postInternalApiFn = async (input) => {
+    postCalls.push(input)
+    return { success: true, data: { sent: true } }
+  }
+
+  const chargeRenewalFn = async () => {
+    return { success: false, error: "card declined" }
+  }
+
+  await chargeSubscriptions({
+    prismaClient,
+    chargeRenewalFn,
+    postInternalApiFn,
+    now: new Date("2026-01-10T09:00:00Z"),
+  })
+
+  assert.equal(postCalls.length, 2)
+  assert.equal(
+    postCalls[0].route,
+    "/internal/notifications/subscriptions/charge-failed"
+  )
+  assert.equal(typeof postCalls[0].body.paymentId, "string")
+
+  assert.equal(
+    postCalls[1].route,
+    "/internal/notifications/subscriptions/defaulted"
+  )
+  assert.equal(postCalls[1].body.subscriptionId, subscription.id)
+})
+
 test("does not attempt renewal twice on the same day", async () => {
   const subscription = buildSubscription()
   const { prismaClient, data } = createMockPrisma({

@@ -1,6 +1,7 @@
 import prisma from "../../../../packages/shared/src/db/client.js"
 import { subtractMoney } from "../../../../packages/shared/src/money.js"
 import { chargeStripePayment } from "../gateways/stripeGateway.js"
+import { postInternalApi } from "../gateways/internalApiGateway.js"
 
 const MAX_FAILED_ATTEMPTS = 3
 
@@ -187,6 +188,7 @@ export const chargeFinancingPlans = async ({
   prismaClient,
   chargeInstallmentFn,
   getProcessorHandlerFn,
+  postInternalApiFn,
 } = {}) => {
   const log = logger || console
   let currentTime = now
@@ -197,6 +199,7 @@ export const chargeFinancingPlans = async ({
   const resolvedChargeInstallment = chargeInstallmentFn || chargeInstallment
   const resolvedGetProcessorHandler =
     getProcessorHandlerFn || getProcessorHandler
+  const resolvedPostInternalApi = postInternalApiFn || postInternalApi
 
   const jobRun = await resolvedPrisma.jobRun.create({
     data: {
@@ -397,6 +400,20 @@ export const chargeFinancingPlans = async ({
               failureMessage: errorMessage,
             },
           })
+
+          try {
+            await resolvedPostInternalApi({
+              route: "/internal/notifications/financing/charge-failed",
+              body: { paymentId: payment.id },
+            })
+          } catch (error) {
+            log.warn("failed to send financing charge-failed notification", {
+              planId: plan.id,
+              paymentId: payment.id,
+              message: error?.message || "Notification failed",
+            })
+          }
+
           failedPayments += 1
           failedPaymentAttempts += 1
           log.warn("charge failed", {
@@ -432,6 +449,20 @@ export const chargeFinancingPlans = async ({
           failedPaymentAttempts,
         },
       })
+
+      if (updatedStatus === "DEFAULTED") {
+        try {
+          await resolvedPostInternalApi({
+            route: "/internal/notifications/financing/defaulted",
+            body: { planId: plan.id },
+          })
+        } catch (error) {
+          log.warn("failed to send financing defaulted notification", {
+            planId: plan.id,
+            message: error?.message || "Notification failed",
+          })
+        }
+      }
 
       processedPlans += 1
       await updateJobRunProgress(resolvedPrisma, jobRun.id, {

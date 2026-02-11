@@ -122,6 +122,7 @@ model User {
   communicationEmails  CommunicationEmail[]
   financingPlans       FinancingPlan[]
   serviceSubscriptions ServiceSubscription[]
+  automatedNotifications AutomatedNotification[]
 }
 
 model VerificationToken {
@@ -493,6 +494,26 @@ model SystemEvent {
 
   @@index([createdAt])
   @@index([eventType, createdAt])
+}
+
+model AutomatedNotification {
+  id           String   @id @default(cuid())
+  type         String
+  channel      String
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  entityType   String
+  entityId     String
+  scheduledFor DateTime?
+  daysBefore   Int?
+  dedupeKey    String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@index([type, createdAt])
+  @@index([entityType, entityId])
+  @@index([scheduledFor])
 }
 
 model JobRun {

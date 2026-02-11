@@ -6,6 +6,7 @@
   "scripts": {
     "runChargeFinancing": "node scripts/financing/runChargeFinancing.js",
     "runChargeSubscriptions": "node scripts/subscriptions/runChargeSubscriptions.js",
+    "runSendUpcomingChargeReminders": "node scripts/reminders/runSendUpcomingChargeReminders.js",
     "lint": "eslint .",
     "test": "node --test"
   },

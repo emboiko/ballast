@@ -477,6 +477,514 @@ export const sendOrderConfirmationEmail = async ({
   }
 }
 
+const formatEmailDate = (date) => {
+  if (!date) {
+    return "—"
+  }
+  const parsed = new Date(date)
+  if (Number.isNaN(parsed.getTime())) {
+    return "—"
+  }
+  return parsed.toLocaleDateString("en-US")
+}
+
+/**
+ * Notify a user that a subscription has been activated.
+ * @param {object} params
+ * @param {string} params.to
+ * @param {string} params.subscriptionId
+ * @param {string} params.serviceName
+ * @param {string} params.intervalLabel
+ * @param {string} params.formattedPrice
+ * @param {Date|string|null|undefined} params.nextChargeDate
+ * @returns {Promise<{ success: boolean, error?: string }>}
+ */
+export const sendSubscriptionActivatedEmail = async ({
+  to,
+  subscriptionId,
+  serviceName,
+  intervalLabel,
+  formattedPrice,
+  nextChargeDate,
+}) => {
+  const subscriptionUrl = `${WEBAPP_URL}/account/subscriptions/${subscriptionId}`
+  const nextChargeLabel = formatEmailDate(nextChargeDate)
+
+  try {
+    const { error } = await getResend().emails.send({
+      from: RESEND_FROM_EMAIL,
+      to,
+      subject: "Subscription activated - Ballast",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #333;">Subscription activated</h1>
+          <p>Your subscription for <strong>${escapeHtml(
+            serviceName
+          )}</strong> is now active.</p>
+          <p><strong>Interval:</strong> ${escapeHtml(intervalLabel)}</p>
+          <p><strong>Price:</strong> ${escapeHtml(formattedPrice)}</p>
+          <p><strong>Next charge:</strong> ${escapeHtml(nextChargeLabel)}</p>
+          <a href="${subscriptionUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">
+            View subscription
+          </a>
+          <p style="color: #666; font-size: 14px; margin-top: 24px;">
+            — The Ballast Team
+          </p>
+        </div>
+      `,
+    })
+
+    if (error) {
+      console.error("Failed to send subscription activated email:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (caughtError) {
+    console.error("Failed to send subscription activated email:", caughtError)
+    return { success: false, error: caughtError.message }
+  }
+}
+
+/**
+ * Notify a user about an upcoming subscription renewal charge.
+ * @param {object} params
+ * @param {string} params.to
+ * @param {string} params.subscriptionId
+ * @param {string} params.serviceName
+ * @param {string} params.formattedAmount
+ * @param {Date|string|null|undefined} params.scheduledFor
+ * @param {number} params.daysBefore
+ * @returns {Promise<{ success: boolean, error?: string }>}
+ */
+export const sendSubscriptionUpcomingChargeReminderEmail = async ({
+  to,
+  subscriptionId,
+  serviceName,
+  formattedAmount,
+  scheduledFor,
+  daysBefore,
+}) => {
+  const subscriptionUrl = `${WEBAPP_URL}/account/subscriptions/${subscriptionId}`
+  const chargeDateLabel = formatEmailDate(scheduledFor)
+
+  let daysBeforeLabel = "a few"
+  if (Number.isInteger(daysBefore) && daysBefore > 0) {
+    daysBeforeLabel = `${daysBefore}`
+  }
+
+  try {
+    const { error } = await getResend().emails.send({
+      from: RESEND_FROM_EMAIL,
+      to,
+      subject: "Upcoming subscription charge - Ballast",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #333;">Upcoming subscription charge</h1>
+          <p>This is a reminder that your subscription for <strong>${escapeHtml(
+            serviceName
+          )}</strong> will renew in <strong>${escapeHtml(
+            daysBeforeLabel
+          )} days</strong>.</p>
+          <p><strong>Amount:</strong> ${escapeHtml(formattedAmount)}</p>
+          <p><strong>Charge date:</strong> ${escapeHtml(chargeDateLabel)}</p>
+          <a href="${subscriptionUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">
+            View subscription
+          </a>
+          <p style="color: #666; font-size: 14px; margin-top: 24px;">
+            — The Ballast Team
+          </p>
+        </div>
+      `,
+    })
+
+    if (error) {
+      console.error(
+        "Failed to send subscription upcoming charge reminder email:",
+        error
+      )
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (caughtError) {
+    console.error(
+      "Failed to send subscription upcoming charge reminder email:",
+      caughtError
+    )
+    return { success: false, error: caughtError.message }
+  }
+}
+
+/**
+ * Notify a user that a subscription renewal charge failed.
+ * @param {object} params
+ * @param {string} params.to
+ * @param {string} params.subscriptionId
+ * @param {string} params.serviceName
+ * @param {string} params.formattedAmount
+ * @param {Date|string|null|undefined} params.scheduledFor
+ * @param {string|undefined} params.failureMessage
+ * @returns {Promise<{ success: boolean, error?: string }>}
+ */
+export const sendSubscriptionChargeFailedEmail = async ({
+  to,
+  subscriptionId,
+  serviceName,
+  formattedAmount,
+  scheduledFor,
+  failureMessage,
+}) => {
+  const subscriptionUrl = `${WEBAPP_URL}/account/subscriptions/${subscriptionId}`
+  const chargeDateLabel = formatEmailDate(scheduledFor)
+  const trimmedFailureMessage =
+    typeof failureMessage === "string" ? failureMessage.trim() : ""
+
+  let failureHtml = ""
+  if (trimmedFailureMessage) {
+    failureHtml = `
+      <div style="margin-top: 16px; padding: 12px 14px; background: #f3f5f7; border-radius: 6px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 6px;">Reason</div>
+        <div style="white-space: pre-wrap;">${escapeHtml(
+          trimmedFailureMessage
+        )}</div>
+      </div>
+    `
+  }
+
+  try {
+    const { error } = await getResend().emails.send({
+      from: RESEND_FROM_EMAIL,
+      to,
+      subject: "Subscription payment failed - Ballast",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #333;">Subscription payment failed</h1>
+          <p>We were unable to process your renewal payment for <strong>${escapeHtml(
+            serviceName
+          )}</strong>.</p>
+          <p><strong>Amount:</strong> ${escapeHtml(formattedAmount)}</p>
+          <p><strong>Scheduled for:</strong> ${escapeHtml(chargeDateLabel)}</p>
+          ${failureHtml}
+          <a href="${subscriptionUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">
+            View subscription
+          </a>
+          <p style="color: #666; font-size: 14px; margin-top: 24px;">
+            — The Ballast Team
+          </p>
+        </div>
+      `,
+    })
+
+    if (error) {
+      console.error("Failed to send subscription charge failed email:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (caughtError) {
+    console.error(
+      "Failed to send subscription charge failed email:",
+      caughtError
+    )
+    return { success: false, error: caughtError.message }
+  }
+}
+
+/**
+ * Notify a user that a subscription has been defaulted for non-payment.
+ * @param {object} params
+ * @param {string} params.to
+ * @param {string} params.subscriptionId
+ * @param {string} params.serviceName
+ * @returns {Promise<{ success: boolean, error?: string }>}
+ */
+export const sendSubscriptionDefaultedEmail = async ({
+  to,
+  subscriptionId,
+  serviceName,
+}) => {
+  const subscriptionUrl = `${WEBAPP_URL}/account/subscriptions/${subscriptionId}`
+
+  try {
+    const { error } = await getResend().emails.send({
+      from: RESEND_FROM_EMAIL,
+      to,
+      subject: "Subscription defaulted - Ballast",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #333;">Subscription defaulted</h1>
+          <p>Your subscription for <strong>${escapeHtml(
+            serviceName
+          )}</strong> has been defaulted due to repeated payment failures.</p>
+          <a href="${subscriptionUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">
+            View subscription
+          </a>
+          <p style="color: #666; font-size: 14px; margin-top: 24px;">
+            — The Ballast Team
+          </p>
+        </div>
+      `,
+    })
+
+    if (error) {
+      console.error("Failed to send subscription defaulted email:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (caughtError) {
+    console.error("Failed to send subscription defaulted email:", caughtError)
+    return { success: false, error: caughtError.message }
+  }
+}
+
+/**
+ * Notify a user that a financing plan has been activated.
+ * @param {object} params
+ * @param {string} params.to
+ * @param {string} params.planId
+ * @param {string} params.formattedTotal
+ * @param {string} params.formattedDownPayment
+ * @param {string} params.formattedInstallmentAmount
+ * @param {string} params.cadenceLabel
+ * @param {number} params.termCount
+ * @param {Date|string|null|undefined} params.nextPaymentDate
+ * @returns {Promise<{ success: boolean, error?: string }>}
+ */
+export const sendFinancingPlanActivatedEmail = async ({
+  to,
+  planId,
+  formattedTotal,
+  formattedDownPayment,
+  formattedInstallmentAmount,
+  cadenceLabel,
+  termCount,
+  nextPaymentDate,
+}) => {
+  const planUrl = `${WEBAPP_URL}/account/financing/${planId}`
+  const nextPaymentLabel = formatEmailDate(nextPaymentDate)
+
+  try {
+    const { error } = await getResend().emails.send({
+      from: RESEND_FROM_EMAIL,
+      to,
+      subject: "Financing plan activated - Ballast",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #333;">Financing plan activated</h1>
+          <p>Your financing plan is now active.</p>
+          <p><strong>Total:</strong> ${escapeHtml(formattedTotal)}</p>
+          <p><strong>Down payment:</strong> ${escapeHtml(formattedDownPayment)}</p>
+          <p><strong>Term:</strong> ${escapeHtml(
+            `${termCount} payments (${cadenceLabel})`
+          )}</p>
+          <p><strong>Installment amount:</strong> ${escapeHtml(
+            formattedInstallmentAmount
+          )}</p>
+          <p><strong>Next payment:</strong> ${escapeHtml(nextPaymentLabel)}</p>
+          <a href="${planUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">
+            View financing plan
+          </a>
+          <p style="color: #666; font-size: 14px;">
+            You can also make principal payments from your plan details page.
+          </p>
+          <p style="color: #666; font-size: 14px; margin-top: 24px;">
+            — The Ballast Team
+          </p>
+        </div>
+      `,
+    })
+
+    if (error) {
+      console.error("Failed to send financing plan activated email:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (caughtError) {
+    console.error("Failed to send financing plan activated email:", caughtError)
+    return { success: false, error: caughtError.message }
+  }
+}
+
+/**
+ * Notify a user about an upcoming financing installment.
+ * @param {object} params
+ * @param {string} params.to
+ * @param {string} params.planId
+ * @param {string} params.formattedAmount
+ * @param {Date|string|null|undefined} params.dueDate
+ * @param {number} params.daysBefore
+ * @returns {Promise<{ success: boolean, error?: string }>}
+ */
+export const sendFinancingUpcomingInstallmentReminderEmail = async ({
+  to,
+  planId,
+  formattedAmount,
+  dueDate,
+  daysBefore,
+}) => {
+  const planUrl = `${WEBAPP_URL}/account/financing/${planId}`
+  const dueDateLabel = formatEmailDate(dueDate)
+  let daysBeforeLabel = "a few"
+  if (Number.isInteger(daysBefore) && daysBefore > 0) {
+    daysBeforeLabel = `${daysBefore}`
+  }
+
+  try {
+    const { error } = await getResend().emails.send({
+      from: RESEND_FROM_EMAIL,
+      to,
+      subject: "Upcoming financing payment - Ballast",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #333;">Upcoming financing payment</h1>
+          <p>This is a reminder that you have a financing payment due in <strong>${escapeHtml(
+            daysBeforeLabel
+          )} days</strong>.</p>
+          <p><strong>Amount:</strong> ${escapeHtml(formattedAmount)}</p>
+          <p><strong>Due date:</strong> ${escapeHtml(dueDateLabel)}</p>
+          <a href="${planUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">
+            View financing plan
+          </a>
+          <p style="color: #666; font-size: 14px;">
+            You can make principal payments from your plan details page.
+          </p>
+          <p style="color: #666; font-size: 14px; margin-top: 24px;">
+            — The Ballast Team
+          </p>
+        </div>
+      `,
+    })
+
+    if (error) {
+      console.error(
+        "Failed to send financing upcoming installment reminder email:",
+        error
+      )
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (caughtError) {
+    console.error(
+      "Failed to send financing upcoming installment reminder email:",
+      caughtError
+    )
+    return { success: false, error: caughtError.message }
+  }
+}
+
+/**
+ * Notify a user that a financing charge failed.
+ * @param {object} params
+ * @param {string} params.to
+ * @param {string} params.planId
+ * @param {string} params.formattedAmount
+ * @param {Date|string|null|undefined} params.dueDate
+ * @param {string|undefined} params.failureMessage
+ * @returns {Promise<{ success: boolean, error?: string }>}
+ */
+export const sendFinancingChargeFailedEmail = async ({
+  to,
+  planId,
+  formattedAmount,
+  dueDate,
+  failureMessage,
+}) => {
+  const planUrl = `${WEBAPP_URL}/account/financing/${planId}`
+  const dueDateLabel = formatEmailDate(dueDate)
+  const trimmedFailureMessage =
+    typeof failureMessage === "string" ? failureMessage.trim() : ""
+
+  let failureHtml = ""
+  if (trimmedFailureMessage) {
+    failureHtml = `
+      <div style="margin-top: 16px; padding: 12px 14px; background: #f3f5f7; border-radius: 6px;">
+        <div style="font-size: 12px; color: #666; margin-bottom: 6px;">Reason</div>
+        <div style="white-space: pre-wrap;">${escapeHtml(
+          trimmedFailureMessage
+        )}</div>
+      </div>
+    `
+  }
+
+  try {
+    const { error } = await getResend().emails.send({
+      from: RESEND_FROM_EMAIL,
+      to,
+      subject: "Financing payment failed - Ballast",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #333;">Financing payment failed</h1>
+          <p>We were unable to process your financing payment.</p>
+          <p><strong>Amount:</strong> ${escapeHtml(formattedAmount)}</p>
+          <p><strong>Due date:</strong> ${escapeHtml(dueDateLabel)}</p>
+          ${failureHtml}
+          <a href="${planUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">
+            View financing plan
+          </a>
+          <p style="color: #666; font-size: 14px; margin-top: 24px;">
+            — The Ballast Team
+          </p>
+        </div>
+      `,
+    })
+
+    if (error) {
+      console.error("Failed to send financing charge failed email:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (caughtError) {
+    console.error("Failed to send financing charge failed email:", caughtError)
+    return { success: false, error: caughtError.message }
+  }
+}
+
+/**
+ * Notify a user that a financing plan has defaulted for non-payment.
+ * @param {object} params
+ * @param {string} params.to
+ * @param {string} params.planId
+ * @returns {Promise<{ success: boolean, error?: string }>}
+ */
+export const sendFinancingPlanDefaultedEmail = async ({ to, planId }) => {
+  const planUrl = `${WEBAPP_URL}/account/financing/${planId}`
+
+  try {
+    const { error } = await getResend().emails.send({
+      from: RESEND_FROM_EMAIL,
+      to,
+      subject: "Financing plan defaulted - Ballast",
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #333;">Financing plan defaulted</h1>
+          <p>Your financing plan has been defaulted due to repeated payment failures.</p>
+          <a href="${planUrl}" style="display: inline-block; padding: 12px 24px; background-color: #2e7d32; color: white; text-decoration: none; border-radius: 4px; margin: 16px 0;">
+            View financing plan
+          </a>
+          <p style="color: #666; font-size: 14px; margin-top: 24px;">
+            — The Ballast Team
+          </p>
+        </div>
+      `,
+    })
+
+    if (error) {
+      console.error("Failed to send financing plan defaulted email:", error)
+      return { success: false, error: error.message }
+    }
+
+    return { success: true }
+  } catch (caughtError) {
+    console.error("Failed to send financing plan defaulted email:", caughtError)
+    return { success: false, error: caughtError.message }
+  }
+}
+
 /**
  * Notify a user that they have been granted admin dashboard access.
  * @param {object} params

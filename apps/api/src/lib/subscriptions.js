@@ -1,6 +1,7 @@
 import { z } from "zod"
 import prisma from "../../../../packages/shared/src/db/client.js"
 import { getPaymentIntentSummary } from "../gateways/stripeGateway.js"
+import { sendSubscriptionActivatedNotification } from "./notifications/notifications.js"
 
 const subscriptionIntervalSchema = z.enum([
   "MONTHLY",
@@ -285,6 +286,14 @@ export const createServiceSubscriptionsFromOrder = async ({
         processorPaymentId: orderPaymentKey,
       },
     })
+
+    try {
+      await sendSubscriptionActivatedNotification({
+        subscriptionId: subscription.id,
+      })
+    } catch (error) {
+      console.warn("Failed to send subscription activated email:", error)
+    }
 
     createdCount += 1
   }

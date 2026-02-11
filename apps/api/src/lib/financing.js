@@ -8,6 +8,7 @@ import {
   createPaymentIntent,
   getPaymentIntentSummary,
 } from "../gateways/stripeGateway.js"
+import { sendFinancingPlanActivatedNotification } from "./notifications/notifications.js"
 
 const DOWN_PAYMENT_PERCENT = 20
 const MAX_TERM_COUNT = 60
@@ -352,6 +353,12 @@ export const createFinancingPlanFromCheckout = async ({
       createdBy: userId,
     },
   })
+
+  try {
+    await sendFinancingPlanActivatedNotification({ planId: plan.id })
+  } catch (error) {
+    console.warn("Failed to send financing plan activated email:", error)
+  }
 
   return {
     success: true,

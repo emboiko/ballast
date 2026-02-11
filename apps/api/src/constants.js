@@ -131,6 +131,28 @@ export const RESEND_WEBHOOK_SECRET = warnEnvValue(
   undefined
 )
 
+/**
+ * Shared secret used by internal Jobs callers.
+ * Passed via: Authorization: Bearer <token>
+ * @type {string|undefined}
+ */
+export const JOBS_INTERNAL_API_TOKEN = warnEnvValue(
+  "JOBS_INTERNAL_API_TOKEN",
+  process.env.JOBS_INTERNAL_API_TOKEN,
+  undefined
+)
+
+/**
+ * How many days before a charge we should send reminders.
+ * Jobs are responsible for selecting due items; API uses this mainly as a default.
+ * @type {string|undefined}
+ */
+export const PAYMENT_REMINDER_DAYS_BEFORE = warnEnvValue(
+  "PAYMENT_REMINDER_DAYS_BEFORE",
+  process.env.PAYMENT_REMINDER_DAYS_BEFORE,
+  "3"
+)
+
 // ============================================================================
 // Payment Gateway
 // ============================================================================

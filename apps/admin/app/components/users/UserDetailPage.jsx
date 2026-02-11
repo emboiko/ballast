@@ -362,7 +362,9 @@ export default function UserDetailPage() {
     )
   }
 
-  let financingPlansContent = <DetailValue>{user.financingPlanCount}</DetailValue>
+  let financingPlansContent = (
+    <DetailValue>{user.financingPlanCount}</DetailValue>
+  )
   if (user?.id) {
     financingPlansContent = (
       <DetailValue>
@@ -381,6 +383,19 @@ export default function UserDetailPage() {
       <DetailValue>
         <InlineLink href={`/communications/contact?userId=${user.id}`}>
           {user.contactSubmissionCount}
+        </InlineLink>
+      </DetailValue>
+    )
+  }
+
+  let subscriptionsContent = (
+    <DetailValue>{user.serviceSubscriptionCount}</DetailValue>
+  )
+  if (user?.id) {
+    subscriptionsContent = (
+      <DetailValue>
+        <InlineLink href={`/subscriptions?userId=${user.id}`}>
+          {user.serviceSubscriptionCount}
         </InlineLink>
       </DetailValue>
     )
@@ -493,7 +508,9 @@ export default function UserDetailPage() {
             </DetailItem>
             <DetailItem>
               <DetailLabel>State / Region</DetailLabel>
-              <DetailValue>{formatUserInfoValue(user.billingRegion)}</DetailValue>
+              <DetailValue>
+                {formatUserInfoValue(user.billingRegion)}
+              </DetailValue>
             </DetailItem>
             <DetailItem>
               <DetailLabel>Postal Code</DetailLabel>
@@ -503,7 +520,9 @@ export default function UserDetailPage() {
             </DetailItem>
             <DetailItem>
               <DetailLabel>Country</DetailLabel>
-              <DetailValue>{formatUserInfoValue(user.billingCountry)}</DetailValue>
+              <DetailValue>
+                {formatUserInfoValue(user.billingCountry)}
+              </DetailValue>
             </DetailItem>
           </DetailGrid>
         </DetailSection>
@@ -542,6 +561,10 @@ export default function UserDetailPage() {
             <DetailItem>
               <DetailLabel>Contact Submissions</DetailLabel>
               {contactSubmissionsContent}
+            </DetailItem>
+            <DetailItem>
+              <DetailLabel>Subscriptions</DetailLabel>
+              {subscriptionsContent}
             </DetailItem>
             <DetailItem>
               <DetailLabel>Total Refunds</DetailLabel>

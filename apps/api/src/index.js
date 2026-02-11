@@ -24,6 +24,7 @@ import adminEventsRoutes from "./routes/admin/events.js"
 import adminFinancingRoutes from "./routes/admin/financing.js"
 import adminJobsRoutes from "./routes/admin/jobs.js"
 import adminSubscriptionsRoutes from "./routes/admin/subscriptions.js"
+import internalNotificationsRoutes from "./routes/internal/notifications.js"
 
 const app = express()
 
@@ -61,6 +62,9 @@ app.use("/fees", feesRoutes)
 app.use("/users", usersRoutes)
 app.use("/financing", financingRoutes)
 app.use("/subscriptions", subscriptionsRoutes)
+
+// Internal (Jobs) routes
+app.use("/internal/notifications", internalNotificationsRoutes)
 
 // Admin routes
 app.use("/admin/auth", adminAuthRoutes)

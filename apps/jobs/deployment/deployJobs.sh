@@ -36,6 +36,10 @@ case $JOB_NAME in
     JOB_COMMAND="/app/scripts/subscriptions/runChargeSubscriptions.js"
     SCHEDULE_EXPRESSION="cron(0 14 * * ? *)"
     ;;
+  "send-upcoming-charge-reminders")
+    JOB_COMMAND="/app/scripts/reminders/runSendUpcomingChargeReminders.js"
+    SCHEDULE_EXPRESSION="cron(0 12 * * ? *)"
+    ;;
   *)
     echo "ERROR: Unknown job name '$JOB_NAME'"
     exit 1
