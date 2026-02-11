@@ -38,6 +38,9 @@ importers:
       styled-components:
         specifier: ^6.3.5
         version: 6.3.5(react-dom@19.2.3)(react@19.2.3)
+      zod:
+        specifier: ^4.3.5
+        version: 4.3.5
 
   apps/api:
     dependencies:
@@ -80,6 +83,9 @@ importers:
       stripe:
         specifier: ^20.1.2
         version: 20.1.2
+      zod:
+        specifier: ^4.3.5
+        version: 4.3.5
 
   apps/webapp:
     dependencies:
@@ -113,6 +119,9 @@ importers:
       styled-components:
         specifier: ^6.3.5
         version: 6.3.5(react-dom@19.2.3)(react@19.2.3)
+      zod:
+        specifier: ^4.3.5
+        version: 4.3.5
 
   packages/shared:
     dependencies:

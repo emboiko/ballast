@@ -1,9 +1,19 @@
 import prisma from "../../../../packages/shared/src/db/client.js"
 import { subtractMoney } from "../../../../packages/shared/src/money.js"
+import { z } from "zod"
 import { chargeStripePayment } from "../gateways/stripeGateway.js"
 import { postInternalApi } from "../gateways/internalApiGateway.js"
 
 const MAX_FAILED_ATTEMPTS = 3
+
+const scheduleJsonSchema = z.looseObject({
+  installments: z.array(
+    z.looseObject({
+      amountCents: z.number().int().positive(),
+      dueDate: z.string().min(1),
+    })
+  ),
+})
 
 const normalizeInstallment = (installment) => {
   if (!installment) {
@@ -32,12 +42,12 @@ const getInstallments = (plan) => {
     return []
   }
 
-  const installments = plan.scheduleJson.installments
-  if (!Array.isArray(installments)) {
+  const parsedSchedule = scheduleJsonSchema.safeParse(plan.scheduleJson)
+  if (!parsedSchedule.success) {
     return []
   }
 
-  const normalized = installments
+  const normalized = parsedSchedule.data.installments
     .map((installment) => normalizeInstallment(installment))
     .filter((installment) => installment !== null)
 
@@ -182,6 +192,17 @@ const getProcessorHandler = (prismaClient, plan) => {
   return null
 }
 
+/**
+ * Charge due financing plan installments.
+ * @param {object} [params]
+ * @param {Console|{ info?: Function, warn: Function, error?: Function }} [params.logger]
+ * @param {Date} [params.now]
+ * @param {any} [params.prismaClient]
+ * @param {Function} [params.chargeInstallmentFn]
+ * @param {Function} [params.getProcessorHandlerFn]
+ * @param {Function} [params.postInternalApiFn]
+ * @returns {Promise<{ success: boolean, summary?: object, error?: string }>}
+ */
 export const chargeFinancingPlans = async ({
   logger,
   now,

@@ -1,4 +1,13 @@
 import { API_URL } from "@/constants.js"
+import { z } from "zod"
+
+const cartItemSchema = z.looseObject({
+  id: z.string().trim().min(1),
+  name: z.string().trim().min(1),
+  priceCents: z.number().int().nonnegative(),
+  quantity: z.number().int().positive().optional(),
+  type: z.string().trim().min(1).optional(),
+})
 
 /**
  * Fetch cart fees from the API
@@ -7,12 +16,27 @@ import { API_URL } from "@/constants.js"
  * @returns {Promise<{ fees: Array<{ id: string, label: string, amountCents: number }> }>}
  */
 export const fetchCartFees = async (cartItems, userAgent) => {
+  const parsedCartItems = z.array(cartItemSchema).min(1).safeParse(cartItems)
+  if (!parsedCartItems.success) {
+    throw new Error("Invalid cartItems")
+  }
+
+  const parsedUserAgent = z
+    .string()
+    .trim()
+    .min(1)
+    .optional()
+    .safeParse(userAgent)
+  if (!parsedUserAgent.success) {
+    throw new Error("Invalid userAgent")
+  }
+
   const response = await fetch(`${API_URL}/fees/cart`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify({
-      cartItems: cartItems.map((item) => {
+      cartItems: parsedCartItems.data.map((item) => {
         return {
           id: item.id,
           name: item.name,
@@ -21,7 +45,7 @@ export const fetchCartFees = async (cartItems, userAgent) => {
           type: item.type,
         }
       }),
-      userAgent,
+      userAgent: parsedUserAgent.data,
     }),
   })
 

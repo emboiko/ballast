@@ -1,5 +1,6 @@
 import { Router } from "express"
 import crypto from "crypto"
+import { z } from "zod"
 import {
   API_URL,
   WEBAPP_URL,
@@ -36,13 +37,63 @@ import {
 
 const router = Router()
 
+const emailSchema = z.string().trim().max(255).pipe(z.email())
+const passwordSchema = z.string().min(8).max(255)
+
+const signupBodySchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+  turnstileToken: z.string().trim().min(1).optional(),
+})
+
+const loginBodySchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1).max(255),
+})
+
+const resendVerificationBodySchema = z.object({
+  email: emailSchema,
+})
+
+const updateEmailBodySchema = z.object({
+  newEmail: emailSchema,
+  password: z.string().min(1).max(255),
+})
+
+const updatePasswordBodySchema = z.object({
+  currentPassword: z.string().min(1).max(255),
+  newPassword: passwordSchema,
+})
+
+const forgotPasswordBodySchema = z.object({
+  email: emailSchema,
+})
+
+const resetPasswordBodySchema = z.object({
+  token: z.string().trim().min(1),
+  newPassword: passwordSchema,
+})
+
+const deleteAccountBodySchema = z.object({
+  password: z.string().min(1).max(255),
+})
+
+const tokenQuerySchema = z.object({
+  token: z.string().trim().min(1),
+})
+
 // POST /auth/signup
 router.post("/signup", async (req, res) => {
   try {
+    const parsedBody = signupBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
     const result = await signup(
-      req.body.email,
-      req.body.password,
-      req.body.turnstileToken,
+      parsedBody.data.email,
+      parsedBody.data.password,
+      parsedBody.data.turnstileToken,
       req.ip
     )
 
@@ -161,7 +212,12 @@ router.get("/google/callback", async (req, res) => {
 // POST /auth/login
 router.post("/login", async (req, res) => {
   try {
-    const result = await login(req.body.email, req.body.password)
+    const parsedBody = loginBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
+    const result = await login(parsedBody.data.email, parsedBody.data.password)
 
     if (!result.success) {
       if (result.banned === true) {
@@ -202,7 +258,12 @@ router.post("/logout", (req, res) => {
 // GET /auth/verify?token=xxx - Initial email verification for new accounts
 router.get("/verify", async (req, res) => {
   try {
-    const result = await verifyEmail(req.query.token)
+    const parsedQuery = tokenQuerySchema.safeParse(req.query)
+    if (!parsedQuery.success) {
+      return res.redirect(`${WEBAPP_URL}?error=invalid_request`)
+    }
+
+    const result = await verifyEmail(parsedQuery.data.token)
 
     if (!result.success) {
       return res.redirect(`${WEBAPP_URL}?error=${result.error}`)
@@ -224,7 +285,14 @@ router.get("/verify", async (req, res) => {
 // GET /auth/verify-email-change?token=xxx - Verify new email address
 router.get("/verify-email-change", async (req, res) => {
   try {
-    const result = await verifyEmailChange(req.query.token)
+    const parsedQuery = tokenQuerySchema.safeParse(req.query)
+    if (!parsedQuery.success) {
+      return res.redirect(
+        `${WEBAPP_URL}/account/settings?error=invalid_request`
+      )
+    }
+
+    const result = await verifyEmailChange(parsedQuery.data.token)
 
     if (!result.success) {
       return res.redirect(
@@ -253,7 +321,12 @@ router.get("/me", requireAuth, (req, res) => {
 // POST /auth/resend-verification
 router.post("/resend-verification", async (req, res) => {
   try {
-    const result = await resendVerification(req.body.email)
+    const parsedBody = resendVerificationBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
+    const result = await resendVerification(parsedBody.data.email)
     res.json({ message: result.message })
   } catch (error) {
     console.error("Resend verification error:", error)
@@ -264,10 +337,15 @@ router.post("/resend-verification", async (req, res) => {
 // POST /auth/update-email - Request email change (requires auth)
 router.post("/update-email", requireAuth, async (req, res) => {
   try {
+    const parsedBody = updateEmailBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
     const result = await requestEmailChange(
       req.user.id,
-      req.body.newEmail,
-      req.body.password
+      parsedBody.data.newEmail,
+      parsedBody.data.password
     )
 
     if (!result.success) {
@@ -284,10 +362,15 @@ router.post("/update-email", requireAuth, async (req, res) => {
 // POST /auth/update-password - Change password (requires auth)
 router.post("/update-password", requireAuth, async (req, res) => {
   try {
+    const parsedBody = updatePasswordBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
     const result = await updatePassword(
       req.user.id,
-      req.body.currentPassword,
-      req.body.newPassword
+      parsedBody.data.currentPassword,
+      parsedBody.data.newPassword
     )
 
     if (!result.success) {
@@ -304,7 +387,12 @@ router.post("/update-password", requireAuth, async (req, res) => {
 // POST /auth/forgot-password - Request password reset (no auth required)
 router.post("/forgot-password", async (req, res) => {
   try {
-    const result = await forgotPassword(req.body.email)
+    const parsedBody = forgotPasswordBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
+    const result = await forgotPassword(parsedBody.data.email)
     res.json({ message: result.message })
   } catch (error) {
     console.error("Forgot password error:", error)
@@ -315,7 +403,15 @@ router.post("/forgot-password", async (req, res) => {
 // POST /auth/reset-password - Reset password with token
 router.post("/reset-password", async (req, res) => {
   try {
-    const result = await resetPassword(req.body.token, req.body.newPassword)
+    const parsedBody = resetPasswordBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
+    const result = await resetPassword(
+      parsedBody.data.token,
+      parsedBody.data.newPassword
+    )
 
     if (!result.success) {
       return res.status(400).json({ error: result.error })
@@ -340,7 +436,12 @@ router.post("/reset-password", async (req, res) => {
 // POST /auth/delete-account - Self-service account deletion (archives)
 router.post("/delete-account", requireAuth, async (req, res) => {
   try {
-    const result = await archiveAccount(req.user.id, req.body.password)
+    const parsedBody = deleteAccountBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
+    const result = await archiveAccount(req.user.id, parsedBody.data.password)
 
     if (!result.success) {
       return res.status(400).json({ error: result.error })
@@ -357,7 +458,12 @@ router.post("/delete-account", requireAuth, async (req, res) => {
 // GET /auth/reactivate?token=xxx - Verify account reactivation
 router.get("/reactivate", async (req, res) => {
   try {
-    const result = await verifyAccountReactivation(req.query.token)
+    const parsedQuery = tokenQuerySchema.safeParse(req.query)
+    if (!parsedQuery.success) {
+      return res.redirect(`${WEBAPP_URL}/reactivate?error=invalid_request`)
+    }
+
+    const result = await verifyAccountReactivation(parsedQuery.data.token)
 
     if (!result.success) {
       return res.redirect(`${WEBAPP_URL}/reactivate?error=${result.error}`)

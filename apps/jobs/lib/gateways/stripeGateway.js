@@ -1,21 +1,31 @@
 import Stripe from "stripe"
-import { loadEnv } from "../../../../packages/shared/src/config/env.js"
+import { STRIPE_SECRET_KEY } from "../constants.js"
 
 let stripeClient = null
 
 const getStripeClient = () => {
   if (!stripeClient) {
-    loadEnv()
-    const secretKey = process.env.STRIPE_SECRET_KEY
-    if (!secretKey) {
+    const secretKey = STRIPE_SECRET_KEY
+    if (typeof secretKey !== "string" || secretKey.trim().length === 0) {
       throw new Error("STRIPE_SECRET_KEY is not set")
     }
-    stripeClient = new Stripe(secretKey)
+    stripeClient = new Stripe(secretKey.trim())
   }
 
   return stripeClient
 }
 
+/**
+ * Charge a Stripe customer off-session.
+ * @param {object} params
+ * @param {string} params.customerId
+ * @param {string} params.paymentMethodId
+ * @param {number} params.amountCents - Amount in cents (integer)
+ * @param {string} [params.currency]
+ * @param {string} [params.idempotencyKey]
+ * @param {Record<string, string>|undefined} [params.metadata]
+ * @returns {Promise<{ success: boolean, paymentIntentId?: string, error?: string }>}
+ */
 export const chargeStripePayment = async ({
   customerId,
   paymentMethodId,

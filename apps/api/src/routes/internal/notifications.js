@@ -1,4 +1,5 @@
 import { Router } from "express"
+import { z } from "zod"
 import { requireInternalJobsAuth } from "../../middleware/internalJobsAuth.js"
 import {
   sendFinancingChargeFailedNotification,
@@ -13,12 +14,45 @@ const router = Router()
 
 router.use(requireInternalJobsAuth)
 
+const subscriptionUpcomingChargeBodySchema = z.object({
+  subscriptionId: z.string().trim().min(1),
+  scheduledFor: z.string().trim().min(1),
+  daysBefore: z.number().int().positive(),
+})
+
+const subscriptionChargeFailedBodySchema = z.object({
+  paymentId: z.string().trim().min(1),
+})
+
+const subscriptionDefaultedBodySchema = z.object({
+  subscriptionId: z.string().trim().min(1),
+})
+
+const financingUpcomingChargeBodySchema = z.object({
+  planId: z.string().trim().min(1),
+  dueDate: z.string().trim().min(1),
+  daysBefore: z.number().int().positive(),
+})
+
+const financingChargeFailedBodySchema = z.object({
+  paymentId: z.string().trim().min(1),
+})
+
+const financingDefaultedBodySchema = z.object({
+  planId: z.string().trim().min(1),
+})
+
 router.post("/subscriptions/upcoming-charge", async (req, res) => {
   try {
+    const parsedBody = subscriptionUpcomingChargeBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
     const result = await sendSubscriptionUpcomingChargeReminderNotification({
-      subscriptionId: req.body?.subscriptionId,
-      scheduledFor: req.body?.scheduledFor,
-      daysBefore: req.body?.daysBefore,
+      subscriptionId: parsedBody.data.subscriptionId,
+      scheduledFor: parsedBody.data.scheduledFor,
+      daysBefore: parsedBody.data.daysBefore,
     })
 
     if (!result.success) {
@@ -34,8 +68,13 @@ router.post("/subscriptions/upcoming-charge", async (req, res) => {
 
 router.post("/subscriptions/charge-failed", async (req, res) => {
   try {
+    const parsedBody = subscriptionChargeFailedBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
     const result = await sendSubscriptionChargeFailedNotification({
-      paymentId: req.body?.paymentId,
+      paymentId: parsedBody.data.paymentId,
     })
 
     if (!result.success) {
@@ -51,8 +90,13 @@ router.post("/subscriptions/charge-failed", async (req, res) => {
 
 router.post("/subscriptions/defaulted", async (req, res) => {
   try {
+    const parsedBody = subscriptionDefaultedBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
     const result = await sendSubscriptionDefaultedNotification({
-      subscriptionId: req.body?.subscriptionId,
+      subscriptionId: parsedBody.data.subscriptionId,
     })
 
     if (!result.success) {
@@ -68,10 +112,15 @@ router.post("/subscriptions/defaulted", async (req, res) => {
 
 router.post("/financing/upcoming-charge", async (req, res) => {
   try {
+    const parsedBody = financingUpcomingChargeBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
     const result = await sendFinancingUpcomingInstallmentReminderNotification({
-      planId: req.body?.planId,
-      dueDate: req.body?.dueDate,
-      daysBefore: req.body?.daysBefore,
+      planId: parsedBody.data.planId,
+      dueDate: parsedBody.data.dueDate,
+      daysBefore: parsedBody.data.daysBefore,
     })
 
     if (!result.success) {
@@ -87,8 +136,13 @@ router.post("/financing/upcoming-charge", async (req, res) => {
 
 router.post("/financing/charge-failed", async (req, res) => {
   try {
+    const parsedBody = financingChargeFailedBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
     const result = await sendFinancingChargeFailedNotification({
-      paymentId: req.body?.paymentId,
+      paymentId: parsedBody.data.paymentId,
     })
 
     if (!result.success) {
@@ -104,8 +158,13 @@ router.post("/financing/charge-failed", async (req, res) => {
 
 router.post("/financing/defaulted", async (req, res) => {
   try {
+    const parsedBody = financingDefaultedBodySchema.safeParse(req.body)
+    if (!parsedBody.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
+
     const result = await sendFinancingPlanDefaultedNotification({
-      planId: req.body?.planId,
+      planId: parsedBody.data.planId,
     })
 
     if (!result.success) {
@@ -120,4 +179,3 @@ router.post("/financing/defaulted", async (req, res) => {
 })
 
 export default router
-

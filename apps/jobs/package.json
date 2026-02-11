@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@ballast/shared": "workspace:*",
-    "stripe": "^20.1.2"
+    "stripe": "^20.1.2",
+    "zod": "^4.3.5"
   }
 }

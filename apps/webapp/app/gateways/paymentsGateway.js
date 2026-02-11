@@ -1,4 +1,17 @@
 import { API_URL } from "@/constants.js"
+import { z } from "zod"
+
+const amountCentsSchema = z.number().int().positive()
+const paymentIntentIdSchema = z.string().trim().min(1)
+
+const cartItemSchema = z.looseObject({
+  id: z.string().trim().min(1),
+  name: z.string().trim().min(1),
+  priceCents: z.number().int().nonnegative(),
+  quantity: z.number().int().positive().optional(),
+  type: z.string().trim().min(1).optional(),
+  subscriptionInterval: z.string().trim().min(1).nullable().optional(),
+})
 
 /**
  * Create a Stripe payment intent
@@ -6,11 +19,16 @@ import { API_URL } from "@/constants.js"
  * @returns {Promise<{ clientSecret: string, paymentIntentId: string }>}
  */
 export const createStripeIntent = async (amountCents) => {
+  const parsedAmount = amountCentsSchema.safeParse(amountCents)
+  if (!parsedAmount.success) {
+    throw new Error("Invalid amountCents")
+  }
+
   const response = await fetch(`${API_URL}/payments/stripe/create-intent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ amountCents }),
+    body: JSON.stringify({ amountCents: parsedAmount.data }),
   })
 
   if (!response.ok) {
@@ -28,13 +46,23 @@ export const createStripeIntent = async (amountCents) => {
  * @returns {Promise<{ success: boolean, orderId?: string, status?: string, warning?: string }>}
  */
 export const confirmStripePayment = async (paymentIntentId, cartItems) => {
+  const parsedPaymentIntentId = paymentIntentIdSchema.safeParse(paymentIntentId)
+  if (!parsedPaymentIntentId.success) {
+    throw new Error("Invalid paymentIntentId")
+  }
+
+  const parsedCartItems = z.array(cartItemSchema).min(1).safeParse(cartItems)
+  if (!parsedCartItems.success) {
+    throw new Error("Invalid cartItems")
+  }
+
   const response = await fetch(`${API_URL}/payments/stripe/confirm-payment`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
     body: JSON.stringify({
-      paymentIntentId,
-      cartItems: cartItems.map((item) => ({
+      paymentIntentId: parsedPaymentIntentId.data,
+      cartItems: parsedCartItems.data.map((item) => ({
         id: item.id,
         name: item.name,
         priceCents: item.priceCents,
@@ -67,11 +95,16 @@ export const confirmStripePayment = async (paymentIntentId, cartItems) => {
  * @returns {Promise<{ status: string }>}
  */
 export const cancelStripeIntent = async (paymentIntentId) => {
+  const parsedPaymentIntentId = paymentIntentIdSchema.safeParse(paymentIntentId)
+  if (!parsedPaymentIntentId.success) {
+    throw new Error("Invalid paymentIntentId")
+  }
+
   const response = await fetch(`${API_URL}/payments/stripe/cancel-intent`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ paymentIntentId }),
+    body: JSON.stringify({ paymentIntentId: parsedPaymentIntentId.data }),
   })
 
   const data = await response.json().catch(() => ({}))

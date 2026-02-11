@@ -1,4 +1,5 @@
 import { Router } from "express"
+import { z } from "zod"
 import { requireAuth, requireVerified } from "../middleware/auth.js"
 import {
   createStripeIntent,
@@ -8,6 +9,27 @@ import {
 
 const router = Router()
 
+const createIntentBodySchema = z.object({
+  amountCents: z.number().int().positive(),
+})
+
+const cancelIntentBodySchema = z.object({
+  paymentIntentId: z.string().trim().min(1),
+})
+
+const cartItemSchema = z.looseObject({
+  id: z.string().trim().min(1),
+  name: z.string().trim().min(1),
+  priceCents: z.number().int().nonnegative(),
+  quantity: z.number().int().positive().optional(),
+  type: z.string().trim().min(1).optional(),
+})
+
+const confirmPaymentBodySchema = z.object({
+  paymentIntentId: z.string().trim().min(1),
+  cartItems: z.array(cartItemSchema).min(1),
+})
+
 // POST /payments/stripe/create-intent
 // Creates a payment intent with the actual cart amount (lazy creation on checkout)
 router.post(
@@ -16,10 +38,15 @@ router.post(
   requireVerified,
   async (req, res) => {
     try {
+      const parsedBody = createIntentBodySchema.safeParse(req.body)
+      if (!parsedBody.success) {
+        return res.status(400).json({ error: "Invalid request" })
+      }
+
       const result = await createStripeIntent(
         req.user.id,
         req.user.email,
-        req.body.amountCents
+        parsedBody.data.amountCents
       )
 
       if (!result.success) {
@@ -45,10 +72,15 @@ router.post(
   requireVerified,
   async (req, res) => {
     try {
+      const parsedBody = confirmPaymentBodySchema.safeParse(req.body)
+      if (!parsedBody.success) {
+        return res.status(400).json({ error: "Invalid request" })
+      }
+
       const result = await confirmStripePayment(
         req.user.id,
-        req.body.paymentIntentId,
-        req.body.cartItems
+        parsedBody.data.paymentIntentId,
+        parsedBody.data.cartItems
       )
 
       if (!result.success) {
@@ -75,7 +107,12 @@ router.post(
   requireVerified,
   async (req, res) => {
     try {
-      const result = await cancelStripeIntent(req.body.paymentIntentId)
+      const parsedBody = cancelIntentBodySchema.safeParse(req.body)
+      if (!parsedBody.success) {
+        return res.status(400).json({ error: "Invalid request" })
+      }
+
+      const result = await cancelStripeIntent(parsedBody.data.paymentIntentId)
 
       if (!result.success) {
         return res.status(400).json({ error: result.error })

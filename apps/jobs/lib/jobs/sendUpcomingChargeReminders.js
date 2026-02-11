@@ -1,6 +1,7 @@
 import prisma from "../../../../packages/shared/src/db/client.js"
-import { loadEnv } from "../../../../packages/shared/src/config/env.js"
+import { z } from "zod"
 import { postInternalApi } from "../gateways/internalApiGateway.js"
+import { PAYMENT_REMINDER_DAYS_BEFORE } from "../constants.js"
 
 const JOB_TYPE = "sendUpcomingChargeReminders"
 
@@ -19,10 +20,11 @@ const parsePositiveIntOrNull = (value) => {
   return parsed
 }
 
-const getDaysBeforeFromEnv = () => {
-  loadEnv()
-  return parsePositiveIntOrNull(process.env.PAYMENT_REMINDER_DAYS_BEFORE)
-}
+const internalNotificationResponseSchema = z.looseObject({
+  sent: z.boolean().optional(),
+  skipped: z.boolean().optional(),
+  error: z.string().optional(),
+})
 
 const addUtcDays = (date, daysToAdd) => {
   const startUtcMs = Date.UTC(
@@ -48,6 +50,16 @@ const updateJobRunProgress = async (prismaClient, jobRunId, progress) => {
   })
 }
 
+/**
+ * Send upcoming charge reminder notifications for subscriptions and financing plans.
+ * @param {object} [params]
+ * @param {Console|{ warn: Function, info?: Function, error?: Function }} [params.logger]
+ * @param {Date} [params.now]
+ * @param {any} [params.prismaClient]
+ * @param {Function} [params.postInternalApiFn]
+ * @param {number} [params.daysBefore]
+ * @returns {Promise<{ success: boolean, summary?: object, error?: string }>}
+ */
 export const sendUpcomingChargeReminders = async ({
   logger,
   now,
@@ -66,7 +78,7 @@ export const sendUpcomingChargeReminders = async ({
 
   let resolvedDaysBefore = daysBefore
   if (!Number.isInteger(resolvedDaysBefore) || resolvedDaysBefore <= 0) {
-    const fromEnv = getDaysBeforeFromEnv()
+    const fromEnv = parsePositiveIntOrNull(PAYMENT_REMINDER_DAYS_BEFORE)
     if (fromEnv) {
       resolvedDaysBefore = fromEnv
     } else {
@@ -153,7 +165,15 @@ export const sendUpcomingChargeReminders = async ({
           })
 
           if (response.success) {
-            if (response.data?.sent === true) {
+            const parsedData = internalNotificationResponseSchema.safeParse(
+              response.data
+            )
+            if (!parsedData.success) {
+              failed += 1
+              log.warn("subscription reminder invalid response", {
+                subscriptionId: subscription.id,
+              })
+            } else if (parsedData.data.sent === true) {
               sent += 1
             } else {
               skipped += 1
@@ -204,7 +224,15 @@ export const sendUpcomingChargeReminders = async ({
           })
 
           if (response.success) {
-            if (response.data?.sent === true) {
+            const parsedData = internalNotificationResponseSchema.safeParse(
+              response.data
+            )
+            if (!parsedData.success) {
+              failed += 1
+              log.warn("financing reminder invalid response", {
+                planId: plan.id,
+              })
+            } else if (parsedData.data.sent === true) {
               sent += 1
             } else {
               skipped += 1
@@ -274,4 +302,3 @@ export const sendUpcomingChargeReminders = async ({
     throw error
   }
 }
-

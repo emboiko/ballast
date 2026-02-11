@@ -1,4 +1,5 @@
 import { Router } from "express"
+import { z } from "zod"
 import { requireAdmin } from "../../middleware/admin.js"
 import {
   searchUsers,
@@ -9,20 +10,28 @@ import {
 
 const router = Router()
 
+const adminSearchQuerySchema = z.object({
+  q: z.coerce.string().optional().default(""),
+  type: z
+    .enum(["all", "users", "orders", "refunds", "financing"])
+    .optional()
+    .default("all"),
+  limit: z.coerce.number().int().min(1).max(50).optional().default(5),
+  offset: z.coerce.number().int().min(0).optional().default(0),
+})
+
 // GET /admin/search?q=...&type=all|users|orders|refunds|financing&limit=5&offset=0
 router.get("/", requireAdmin, async (req, res) => {
   try {
-    const query = req.query.q || ""
-    const type = req.query.type || "all"
-    const limit = req.query.limit ? parseInt(req.query.limit, 10) : 5
-    const offset = req.query.offset ? parseInt(req.query.offset, 10) : 0
+    const parsedQuery = adminSearchQuerySchema.safeParse(req.query)
+    if (!parsedQuery.success) {
+      return res.status(400).json({ error: "Invalid request" })
+    }
 
-    if (limit < 1 || limit > 50) {
-      return res.status(400).json({ error: "limit must be between 1 and 50" })
-    }
-    if (offset < 0) {
-      return res.status(400).json({ error: "offset must be non-negative" })
-    }
+    const query = parsedQuery.data.q
+    const type = parsedQuery.data.type
+    const limit = parsedQuery.data.limit
+    const offset = parsedQuery.data.offset
 
     const results = {}
 

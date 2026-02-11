@@ -209,6 +209,17 @@ const chargeRenewal = async ({
   })
 }
 
+/**
+ * Charge due subscription renewals.
+ * @param {object} [params]
+ * @param {Console|{ info?: Function, warn: Function, error?: Function }} [params.logger]
+ * @param {Date} [params.now]
+ * @param {any} [params.prismaClient]
+ * @param {Function} [params.chargeRenewalFn]
+ * @param {Function} [params.getProcessorHandlerFn]
+ * @param {Function} [params.postInternalApiFn]
+ * @returns {Promise<{ success: boolean, summary?: object, error?: string }>}
+ */
 export const chargeSubscriptions = async ({
   logger,
   now,

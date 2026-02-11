@@ -1,33 +1,11 @@
-import { loadEnv } from "../../../../packages/shared/src/config/env.js"
+import { z } from "zod"
+import { INTERNAL_API_BASE_URL, JOBS_INTERNAL_API_TOKEN } from "../constants.js"
 
-const getInternalApiBaseUrl = () => {
-  loadEnv()
-
-  const explicit = process.env.API_INTERNAL_URL
-  if (typeof explicit === "string" && explicit.trim().length > 0) {
-    return explicit.trim().replace(/\/+$/, "")
-  }
-
-  const apiUrl = process.env.API_URL
-  if (typeof apiUrl === "string" && apiUrl.trim().length > 0) {
-    return apiUrl.trim().replace(/\/+$/, "")
-  }
-
-  return "http://localhost:3000"
-}
-
-const getInternalApiToken = () => {
-  loadEnv()
-  const token = process.env.JOBS_INTERNAL_API_TOKEN
-  if (typeof token !== "string") {
-    return null
-  }
-  const trimmed = token.trim()
-  if (!trimmed) {
-    return null
-  }
-  return trimmed
-}
+const postInternalApiParamsSchema = z.object({
+  route: z.string().trim().min(1),
+  body: z.unknown().optional(),
+  fetchFn: z.unknown().optional(),
+})
 
 /**
  * @param {object} params
@@ -37,18 +15,27 @@ const getInternalApiToken = () => {
  * @returns {Promise<{ success: boolean, status?: number, data?: any, error?: string }>}
  */
 export const postInternalApi = async ({ route, body, fetchFn } = {}) => {
-  const token = getInternalApiToken()
+  const parsedParams = postInternalApiParamsSchema.safeParse({
+    route,
+    body,
+    fetchFn,
+  })
+  if (!parsedParams.success) {
+    return { success: false, error: "Invalid request params" }
+  }
+
+  const token = JOBS_INTERNAL_API_TOKEN
   if (!token) {
     return { success: false, error: "Missing JOBS_INTERNAL_API_TOKEN" }
   }
 
-  const baseUrl = getInternalApiBaseUrl()
-  if (typeof route !== "string" || route.trim().length === 0) {
-    return { success: false, error: "route is required" }
-  }
-
   const resolvedFetch = fetchFn || fetch
-  const url = `${baseUrl}${route.startsWith("/") ? "" : "/"}${route}`
+  if (typeof resolvedFetch !== "function") {
+    return { success: false, error: "Invalid fetch function" }
+  }
+  const url = `${INTERNAL_API_BASE_URL}${
+    parsedParams.data.route.startsWith("/") ? "" : "/"
+  }${parsedParams.data.route}`
 
   let response = null
   try {
@@ -58,7 +45,7 @@ export const postInternalApi = async ({ route, body, fetchFn } = {}) => {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(body || {}),
+      body: JSON.stringify(parsedParams.data.body || {}),
     })
   } catch (error) {
     return { success: false, error: error?.message || "Request failed" }
@@ -82,4 +69,3 @@ export const postInternalApi = async ({ route, body, fetchFn } = {}) => {
 
   return { success: true, status, data }
 }
-

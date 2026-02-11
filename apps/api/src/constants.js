@@ -7,6 +7,7 @@
 
 import { loadEnv } from "../../../packages/shared/src/config/env.js"
 import { createEnvWarningHelpers } from "../../../packages/shared/src/config/env-warnings.js"
+import { z } from "zod"
 
 // Load environment variables before evaluating constants
 loadEnv()
@@ -292,3 +293,67 @@ export const CATALOG_IMAGE_ALLOWED_MIME_TYPES = [
   "image/webp",
   "image/avif",
 ]
+
+// ============================================================================
+// Runtime environment validation (best-effort)
+// ============================================================================
+
+const trimmedUrlSchema = z.string().trim().pipe(z.url())
+
+const envValidationSchema = z.object({
+  PORT: z.coerce.number().int().min(1).max(65535),
+  WEBAPP_URL: trimmedUrlSchema,
+  ADMIN_URL: trimmedUrlSchema,
+  API_URL: trimmedUrlSchema,
+  NODE_ENV: z.enum(["development", "test", "production"]),
+  PAYMENT_REMINDER_DAYS_BEFORE: z.coerce.number().int().positive(),
+  CATALOG_IMAGE_MAX_SIZE_BYTES: z.number().int().positive(),
+  CATALOG_IMAGE_MAX_COUNT: z.number().int().positive(),
+
+  JWT_SECRET: z.string().min(1).optional(),
+  JOBS_INTERNAL_API_TOKEN: z.string().min(1).optional(),
+
+  STRIPE_SECRET_KEY: z.string().min(1).optional(),
+
+  RESEND_API_KEY: z.string().min(1).optional(),
+  RESEND_FROM_EMAIL: z.string().min(1).optional(),
+  RESEND_WEBHOOK_SECRET: z.string().min(1).optional(),
+
+  TURNSTILE_SECRET_KEY: z.string().min(1).optional(),
+
+  GOOGLE_OAUTH_CLIENT_ID: z.string().min(1).optional(),
+  GOOGLE_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
+})
+
+const envValidationResult = envValidationSchema.safeParse({
+  PORT,
+  WEBAPP_URL,
+  ADMIN_URL,
+  API_URL,
+  NODE_ENV,
+  PAYMENT_REMINDER_DAYS_BEFORE,
+  CATALOG_IMAGE_MAX_SIZE_BYTES,
+  CATALOG_IMAGE_MAX_COUNT,
+  JWT_SECRET,
+  JOBS_INTERNAL_API_TOKEN,
+  STRIPE_SECRET_KEY,
+  RESEND_API_KEY,
+  RESEND_FROM_EMAIL,
+  RESEND_WEBHOOK_SECRET,
+  TURNSTILE_SECRET_KEY,
+  GOOGLE_OAUTH_CLIENT_ID,
+  GOOGLE_OAUTH_CLIENT_SECRET,
+})
+
+if (!envValidationResult.success) {
+  const treeifiedErrors = z.treeifyError(envValidationResult.error)
+  const message = `Invalid API environment configuration: ${JSON.stringify(
+    treeifiedErrors
+  )}`
+
+  if (NODE_ENV === "production") {
+    throw new Error(message)
+  }
+
+  console.warn(message)
+}
